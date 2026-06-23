@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMS Daily Sales Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:13px;background:#F4F6F9;color:#222}
+.wrap{max-width:1440px;margin:0 auto;padding:12px}
+.hdr{background:#1F3864;color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.hdr h1{font-size:15px;font-weight:500}.hdr p{font-size:10px;opacity:.75;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.update-info{font-size:10px;color:#fff;opacity:.85}
+.btn-file{background:#2E75B6;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit}
+.btn-file:hover{background:#1a5fa0}
+.drop-area{border:1.5px dashed #B0C4DE;border-radius:8px;margin:10px 0;padding:10px 16px;background:#F8FBFF;cursor:pointer;text-align:center;transition:all .2s;font-size:12px;color:#666}
+.drop-area.over{border-color:#2E75B6;background:#EBF5FB}
+.drop-area strong{color:#1F3864}
+.wd-bar{background:#EBF4FF;border:0.5px solid #BDD7EE;border-radius:6px;padding:7px 14px;margin-bottom:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px}
+.wd-bar .badge{background:#1F3864;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:500}
+.wd-item{display:flex;flex-direction:column;gap:1px}
+.wd-item .wlbl{font-size:10px;color:#666}
+.wd-item .wval{font-size:13px;font-weight:500;color:#1F3864}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.scard{background:#fff;border-radius:8px;padding:10px 12px;border:0.5px solid #DDE3EB}
+.scard .lbl{font-size:11px;color:#666;margin-bottom:3px}
+.scard .val{font-size:17px;font-weight:500;color:#1F3864}
+.scard .sub{font-size:10px;color:#999;margin-top:2px}
+.tabs{display:flex;background:#F5F7FA;border-bottom:0.5px solid #DDD;overflow-x:auto}
+.tab{padding:7px 13px;font-size:12px;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;color:#777;font-family:inherit;white-space:nowrap}
+.tab:hover{color:#333}
+.tab.on{font-weight:500;color:#111}
+.tab.on.t0{border-bottom-color:#E67E22}
+.tab.on.t1{border-bottom-color:#1F3864}.tab.on.t2{border-bottom-color:#1F6B3E}
+.tab.on.t3{border-bottom-color:#7B2D8B}.tab.on.t4{border-bottom-color:#4472C4}.tab.on.t5{border-bottom-color:#4A7C59}
+.panel{display:none}.panel.on{display:block}
+.sec-head{padding:8px 14px;font-size:13px;font-weight:500;color:#fff;display:flex;align-items:center;gap:6px}
+.sec-head span{font-weight:400;font-size:11px;opacity:.8}
+.c0{background:#D35400}.c1{background:#1F3864}.c2{background:#1F6B3E}
+.c3{background:#7B2D8B}.c4{background:#4472C4}.c5{background:#4A7C59}
+/* 그래프 영역 */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.chart-box{background:#fff;border-radius:8px;border:0.5px solid #DDE3EB;padding:14px}
+.chart-box.wide{grid-column:1/-1}
+.chart-title{font-size:12px;font-weight:500;color:#1F3864;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.chart-title .ct-badge{font-size:10px;background:#EBF4FF;color:#2E75B6;border-radius:3px;padding:1px 6px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:260px}
+/* 테이블 */
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:10px;font-weight:500;padding:4px 6px;border-bottom:0.5px solid #ddd;white-space:nowrap;overflow:hidden}
+th.L{text-align:left}th.R{text-align:right}th.C{text-align:center}
+th.h1{background:#1F3864;color:#BDD7EE}th.h2{background:#2E75B6;color:#fff}
+th.h3{background:#7B3F00;color:#FFE0B2}th.hg{background:#E8EEF5;color:#555}
+td{padding:4px 6px;border-bottom:0.5px solid #eee;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.L{text-align:left}td.R{text-align:right}td.C{text-align:center}
+td.nm{text-align:left;font-size:12px}td.sub{text-align:left;font-size:10px;color:#888}
+tr.ev td{background:#F0F6FC}tr.od td{background:#fff}
+tr.baro td{background:#E8F5E9!important}tr.total-row td{background:#FEF9EC!important;font-weight:500;color:#7B3F00}
+tr.tot td{background:#FFF9C4!important;color:#7F6000;font-weight:500;border-top:1px solid #E6D87A}
+tr.grand td{background:#1F3864!important;color:#fff;font-weight:500}
+td.ki{background:#FFF3E0!important}td.inp{background:#FFFDE7!important}
+.ki-input{width:100%;background:transparent;border:none;outline:none;text-align:right;font-size:11px;color:#7F4000;font-weight:500;font-family:inherit;padding:0}
+.ki-input::placeholder{color:#D9A06A;font-size:10px}
+.ki-pct{font-size:10px;text-align:right;margin-top:1px}
+.man-input{width:100%;background:transparent;border:none;outline:none;text-align:right;font-size:11px;font-family:inherit;padding:0}
+.man-input::placeholder{color:#bbb;font-size:10px}
+/* 이미지 업로드 */
+.img-drop{border:1.5px dashed #F0A06A;border-radius:6px;padding:8px 12px;background:#FFF8F3;cursor:pointer;text-align:center;font-size:11px;color:#7B3F00;transition:all .2s;margin-top:6px}
+.img-drop:hover{background:#FEEEDD}
+.img-preview{max-width:100%;border-radius:6px;margin-top:6px;border:0.5px solid #ddd}
+.ocr-result{font-size:11px;color:#333;background:#FFF8F3;border:0.5px solid #F0A06A;border-radius:4px;padding:6px;margin-top:4px}
+.g{color:#1F6B3E}.w{color:#C0392B}.na{color:#aaa}
+.note{font-size:10px;color:#aaa;padding:5px 12px;border-top:0.5px solid #eee}
+@media(max-width:768px){.summary{grid-template-columns:repeat(2,1fr)}.chart-grid{grid-template-columns:1fr}.chart-box.wide{grid-column:auto}}
+
+/* 공유용 추가 스타일 */
+.share-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#E8F5E9;color:#1F6B3E;
+  border:0.5px solid #A5D6A7;border-radius:12px;
+  padding:3px 10px;font-size:11px;font-weight:500;
+  margin-left:8px;
+}
+@media print{
+  .btn-file,.drop-area,.img-drop,.paste-zone input[type=file]{display:none!important}
+  .hdr{border-radius:0}
+  .wrap{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="background:#fff;border-radius:8px;border:0.5px solid #DDE3EB;overflow:hidden">
+
+<!-- 헤더 -->
+<div class="hdr">
+  <div>
+    <h1>📊 BMS Daily Sales Tracker &nbsp;<span class="share-badge" id="hdr-badge">📅 2026-06-21 기준 &nbsp;|&nbsp; Jun W.D 14/21일 (66.67%)</span></h1>
+    <p id="hdr-sub">단위: 백만원(M) · 소수점 2자리 | KPI 수기 입력 가능 | 기준일: 2026-06-21 (경과 W.D 14일/총 21일 · 66.67%)</p>
+  </div>
+  <div class="hdr-right">
+    <span class="update-info" id="update-info">기준일: 2026-06-21</span>
+    <button class="btn-file" onclick="document.getElementById('file-inp').click()">📂 Jun MTD 업데이트</button>
+    <input id="file-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+  </div>
+</div>
+
+<!-- 드롭 영역 -->
+<div class="drop-area" id="drop-area">
+  엑셀 파일을 <strong>끌어다 놓거나 클릭</strong>해서 당월 MTD 데이터 업로드
+</div>
+
+<!-- 워킹데이 현황바 -->
+<div class="wd-bar">
+  <span class="badge">워킹데이</span>
+  <div class="wd-item"><div class="wlbl">Apr.</div><div class="wval">22일</div></div>
+  <div class="wd-item"><div class="wlbl">May</div><div class="wval">18일</div></div>
+  <div class="wd-item"><div class="wlbl">Jun. 기준일</div><div class="wval" id="wd-refdate">2026-06-21</div></div>
+  <div class="wd-item"><div class="wlbl">경과 워킹데이</div><div class="wval" id="wd-el">14일</div></div>
+  <div class="wd-item"><div class="wlbl">월 진행율</div><div class="wval" id="wd-prog" style="color:#2E75B6">42.86%</div></div>
+  <div class="wd-item"><div class="wlbl">Jun. 총 워킹데이</div><div class="wval" id="wd-tot">21일</div></div>
+  <div class="wd-item"><div class="wlbl">공휴일 제외</div><div class="wval" style="font-size:11px;color:#666">5/1·5·25 / 6/3 선거일</div></div>
+</div>
+
+<!-- 요약 카드 -->
+<div class="summary" id="summary"></div>
+
+<!-- 탭 -->
+<div class="tabs">
+  <button class="tab t0 on" onclick="showTab('dash',this)">📈 Dashboard</button>
+  <button class="tab t1" onclick="showTab('bms',this)">▶ 바로팜 매출 Summary</button>
+  <button class="tab t2" onclick="showTab('brand',this)">🏪 브랜드관</button>
+  <button class="tab t3" onclick="showTab('direct',this)">🤝 직거래</button>
+  <button class="tab t4" onclick="showTab('prod',this)">주요 품목</button>
+  <button class="tab t5" onclick="showTab('ow',this)">아워팜 품목</button>
+</div>
+
+<div id="p-dash" class="panel on"></div>
+<div id="p-bms"  class="panel"></div>
+<div id="p-brand" class="panel"></div>
+<div id="p-direct" class="panel"></div>
+<div id="p-prod" class="panel"></div>
+<div id="p-ow"  class="panel"></div>
+
+<p class="note">※ 단위: 백만원(M) · 소수점 2자리 &nbsp;|&nbsp; 마감예상 = MTD ÷ 경과WD × 총WD &nbsp;|&nbsp; Apr 22일 / May 18일 / Jun 21일 (W.D) &nbsp;|&nbsp; 기준: 2026-06-21 &nbsp;|&nbsp; 🟠 KPI는 각자 입력 (공유자 간 개별 저장)</p>
+</div>
+</div>
+
+<script>
+// ── 상수 ─────────────────────────────────────────────────────
+const KENVUE_BRAND=['켄뷰(직거래A)','켄뷰(직거래B)','켄뷰(직거래C)'];
+const KENVUE_DIRECT=['켄뷰(한국존슨앤드존슨판매유한회사)','켄뷰(코리아)'];
+const DIRECT_DISPLAY=[
+  {label:'켄뷰(직거래)',  raw:KENVUE_DIRECT},
+  {label:'영진약품(직거래)',raw:['영진약품(직거래)']},
+  {label:'한독KAM(직거래)',raw:['한독KAM (직거래)']},
+  {label:'익수제약(직거래)',raw:['익수제약(직거래)']},
+  {label:'코오롱제약(직거래)',raw:['코오롱제약(직거래)']},
+  {label:'코오롱제약(직거래SP)',raw:['코오롱제약(직거래SP)']},
+];
+const BRAND_VENDORS=[
+  '켄뷰(직거래A)','켄뷰(직거래B)','켄뷰(직거래C)','바로팜','바로팜 기획전',
+  'CHD제약','CMG제약','SK케미칼','경동제약','그린제약','대원제약','동성제약',
+  '레비온','레킷코리아','마더스','삼일제약','아워팜','아워팜(OTC)','아워팜(혜택전)',
+  '영진약품','옵투스','유유제약','익수제약','일동후디스','지엘파마','코오롱제약',
+  '파마리서치','한독','한풍제약','현대약품','휴온스'
+];
+const PB_KW=['다이어스탑','담엔쿨','바로부틴','바로세티','베노힐','아시클로','에스빌','트라제트겔'];
+const OTC_V=['아워팜(OTC)'];
+const YUYOO_V=['아워팜','아워팜(혜택전)'];
+const CHEON_KW=['생맥수','ORS','포도당 세트','캔디 베리','캔디 레몬','캔디 민트'];
+const HOLIDAYS_2026=['2026-06-03'];
+const HOLIDAYS_MAY=['2026-05-01','2026-05-05','2026-05-25'];
+const HOLIDAYS_APR=[];
+
+// ── 정적 데이터 (Apr/May) ─────────────────────────────────────
+const APR={
+  '켄뷰(직거래A)':2045.82,'켄뷰(직거래B)':420.02,'켄뷰(직거래C)':1220.77,
+  '바로팜':62.99,'바로팜 기획전':1.07,'CHD제약':8.73,'CMG제약':42.39,
+  'SK케미칼':26.05,'경동제약':163.82,'그린제약':63.25,'대원제약':186.21,
+  '동성제약':36.41,'레비온':32.27,'레킷코리아':83.44,'마더스':52.49,
+  '삼일제약':52.63,'아워팜':1775.48,'아워팜(OTC)':910.29,'아워팜(혜택전)':72.98,
+  '영진약품':46.38,'옵투스':168.11,'유유제약':149.33,'익수제약':47.06,
+  '일동후디스':12.73,'지엘파마':7.37,'코오롱제약':36.37,'파마리서치':137.88,
+  '한독':339.11,'한풍제약':48.45,'현대약품':103.33,'휴온스':98.10,
+  '켄뷰(한국존슨앤드존슨판매유한회사)':1445.66,'영진약품(직거래)':76.22,
+  '한독KAM (직거래)':2127.12,'익수제약(직거래)':1934.63,
+  '코오롱제약(직거래)':613.32,'코오롱제약(직거래SP)':71.78
+};
+const MAY={
+  '켄뷰(직거래A)':1038.11,'켄뷰(직거래B)':270.39,'켄뷰(직거래C)':795.74,
+  '바로팜':96.23,'바로팜 기획전':1.60,'CHD제약':14.85,'CMG제약':39.56,
+  'SK케미칼':42.22,'경동제약':207.87,'그린제약':86.03,'대원제약':157.54,
+  '동성제약':37.23,'레비온':29.20,'레킷코리아':62.19,'마더스':40.33,
+  '삼일제약':36.49,'아워팜':1676.10,'아워팜(OTC)':730.22,'아워팜(혜택전)':74.67,
+  '영진약품':39.21,'옵투스':108.96,'유유제약':87.30,'익수제약':47.07,
+  '일동후디스':8.41,'지엘파마':6.38,'코오롱제약':37.65,'파마리서치':59.48,
+  '한독':287.08,'한풍제약':41.21,'현대약품':134.68,'휴온스':113.68,
+  '켄뷰(코리아)':893.01,'영진약품(직거래)':73.02,'한독KAM (직거래)':1693.25,
+  '익수제약(직거래)':2087.53,'코오롱제약(직거래)':615.35,'코오롱제약(직거래SP)':63.47
+};
+const APR_TOT=14720.06, MAY_TOT=11833.31;
+const WD_APR=22, WD_MAY=20;
+const APR_OTC={경동:190.64,한독:414.44,pb:24.27,유유:305.25};
+const MAY_OTC={경동:202.40,한독:225.49,pb:29.11,유유:302.32};
+const APR_S={유유건식:1848.46,바로타민:27.86,엘더베리:108.57,바로바이오틱스:15.75,
+  바로콤:26.41,디뉴키업:83.84,헴철:55.80,천혜당:36.12,안심요:34.36,바로스콘:19.59};
+const MAY_S={유유건식:1750.77,바로타민:30.02,엘더베리:85.48,바로바이오틱스:13.24,
+  바로콤:31.68,디뉴키업:37.12,헴철:45.11,천혜당:74.19,안심요:30.57,바로스콘:26.25};
+const APR_P={니조랄:220.43,니코레트:512.35,케토톱:553.34,크림:60.30,마스크:16.80,선크림:30.71};
+const MAY_P={니조랄:187.96,니코레트:382.23,케토톱:353.59,크림:42.42,마스크:8.04,선크림:39.07};
+
+// ── 상태 ─────────────────────────────────────────────────────
+let JUN_V={
+  'CHD제약':11.27,'CMG제약':22.56,'SK케미칼':16.11,
+  '경동제약':113.27,'그린제약':63.23,'대원제약':79.69,'동성제약':25.88,
+  '레비온':17.10,'레킷코리아':100.08,'마더스':19.17,
+  '바로팜':53.54,'바로팜 기획전':1.28,'삼일제약':24.95,
+  '아워팜':1337.37,'아워팜(OTC)':473.79,'아워팜(혜택전)':54.89,
+  '영진약품':25.39,'영진약품(직거래)':36.96,'옵투스':69.96,
+  '유유제약':60.82,'익수제약':39.10,'익수제약(직거래)':672.97,
+  '일동후디스':6.83,'지엘파마':3.89,
+  '코오롱제약':22.96,'코오롱제약(직거래)':375.52,'코오롱제약(직거래SP)':39.07,
+  '파마리서치':41.86,'한독':255.70,'한풍제약':34.03,
+  '현대약품':106.40,'휴온스':110.70,
+  '켄뷰(직거래A)':500.10,'켄뷰(직거래B)':107.51,'켄뷰(직거래C)':283.31,
+  '켄뷰(코리아)':303.25,'한독KAM (직거래)':1014.62
+};
+let JUN_TOT=8409.69,JUN_ROWS=[];
+let WD_E=14,WD_T=21,WD_REF='2026-06-21';
+const KPI={};
+// ── Apr/May 고정값 (원단위 → 백만원) ─────────────────────────
+let BAROFARM_TOTAL_APR=197904.43,BAROFARM_TOTAL_MAY=180692.02,BAROFARM_TOTAL_JUN=null;
+let BAROFARM_BARO_APR=33371.84,BAROFARM_BARO_MAY=12628.86,BAROFARM_BARO_JUN=null;
+let DEPOSIT_CHARGE_APR=13524.16,DEPOSIT_CHARGE_MAY=11430.20,DEPOSIT_CHARGE_JUN=null;
+let DEPOSIT_USE_APR=13448.00,DEPOSIT_USE_MAY=11290.37,DEPOSIT_USE_JUN=null;
+// ── Jun MTD 품목별 기본값 (6/21 기준) ─────────────────────────
+let jEkdong=129.04,jHandok=162.20,jPb=11.87,jYuyooOtc=182.54;
+let jYuyoo=1392.26,jBaro=34.11,jElder=82.44,jBiotic=13.59;
+let jBaRoKom=25.95,jDinew=23.04,jHemchul=41.89,jCheon=30.94;
+let jAnsim=20.24,jBaroscon=13.44;
+let jNizoral=177.02,jNico=277.56,jKetotop=243.11;
+let jCream=25.34,jMask=4.76,jSun=16.32,jJuvelook=41.04;
+// ── Jun MTD 일별 기본값 (6/21 기준, 억원) ─────────────────────
+let DAILY_JUN={1:5.61,2:6.29,3:1.61,4:6.21,5:4.27,6:0.80,7:0.84,
+  8:6.52,9:5.81,10:6.10,11:6.47,12:4.93,13:1.07,14:0.84,
+  15:6.49,16:5.24,17:3.87,18:4.12,19:5.30,20:0.98,21:0.72};
+const chartInstances={};
+
+// ── 워킹데이 ─────────────────────────────────────────────────
+function calcWD(year,month,lastDay){
+  const days=new Date(year,month,0).getDate();
+  // 월별 공휴일 자동 선택
+  const hl = month===6 ? HOLIDAYS_2026 : month===5 ? HOLIDAYS_MAY : HOLIDAYS_APR;
+  let tot=0,el=0;
+  for(let d=1;d<=days;d++){
+    const dt=new Date(year,month-1,d);
+    const key=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(dt.getDay()!==0&&dt.getDay()!==6&&!hl.includes(key)){
+      tot++;if(d<=lastDay)el++;
+    }
+  }
+  return{tot,elapsed:el};
+}
+
+// ── 포매터 ───────────────────────────────────────────────────
+function fm(n){
+  if(n==null||isNaN(n))return '-';
+  return (Math.round(n*100)/100).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function ph(a,b){
+  if(!b)return '<span class="na">-</span>';
+  const v=a/b*100,cls=v>=100?'g':v>=80?'':'w';
+  return `<span class="${cls}">${v.toFixed(1)}%</span>`;
+}
+function fcst(j){return WD_E>0?j/WD_E*WD_T:0;}
+function svM(bv,names){return names.reduce((s,n)=>s+(bv[n]||0),0);}
+function gskw(rows,kw,vendors){
+  return rows.filter(r=>(kw?((r['상품명']||'').includes(kw)):true)&&(vendors?vendors.includes(r['도매상']):true))
+    .reduce((s,r)=>s+(Number(r['실주문금액'])||0),0)/1e6;
+}
+function sumKws(rows,kws,vendors){return kws.reduce((s,k)=>s+gskw(rows,k,vendors),0);}
+function pc(v){return v>=100?'#1F6B3E':v>=80?'#555':'#C0392B';}
+
+function kpiCell(id,j){
+  const k=KPI[id]||'',kn=parseFloat(k.replace(/,/g,''));
+  let p2='';
+  if(kn>0&&!isNaN(kn)){
+    const f=fcst(j),a=f/kn*100,pg=j/kn*100;
+    p2=`<div class="ki-pct"><span style="color:${pc(a)}">마감${a.toFixed(1)}%</span><span class="na"> / MTD ${pg.toFixed(1)}%</span></div>`;
+  }
+  return `<td class="ki"><input class="ki-input" id="${id}" placeholder="KPI(M)" value="${k}" oninput="setKpi('${id}',${j})">${p2}</td>`;
+}
+function setKpi(id,j){KPI[id]=document.getElementById(id)?.value||'';render();}
+
+// ── 테이블 빌더 ──────────────────────────────────────────────
+function tHead(lbl2,sColor){
+  return `<thead><tr>
+  <th class="L h1"${lbl2?' colspan="2"':''}>${lbl2?'품목명':'도매상'}</th>
+  <th class="C h1">Apr. W.D 22일</th><th class="C h1">May W.D 18일</th>
+  <th class="C h2" colspan="3" style="background:${sColor}">Jun. MTD (경과 ${WD_E}일/총 ${WD_T}일)</th>
+  <th class="C h1">마감예상</th><th class="C h3">KPI/달성율</th>
+</tr><tr>
+  <th class="L hg"${lbl2?' colspan="2"':''}></th>
+  <th class="R hg">M</th><th class="R hg">M</th>
+  <th class="R hg">M</th><th class="C hg">vs M-1</th><th class="C hg">vs M-2</th>
+  <th class="R hg">Avg×${WD_T}일</th>
+  <th class="R hg" style="background:#FFF3E0;color:#7F4000">목표M/달성율</th>
+</tr></thead>`;
+}
+function dRow(r,i,prefix,h2){
+  const cls=i%2===0?'ev':'od',f=fcst(r.j||0);
+  return `<tr class="${cls}">
+<td class="nm">${r.n}</td>${h2?`<td class="sub">${r.v||r.sub||''}</td>`:''}
+<td class="R">${fm(r.a)}</td><td class="R">${fm(r.m)}</td><td class="R">${fm(r.j)}</td>
+<td class="C">${ph(r.j,r.m)}</td><td class="C">${ph(r.j,r.a)}</td>
+<td class="R">${fm(f)}</td>${kpiCell(`${prefix}_${i}`,r.j||0)}</tr>`;
+}
+function totR(tot,prefix,h2,cls2='tot'){
+  const f=fcst(tot.j);
+  return `<tr class="${cls2}"><td class="nm"${h2?' colspan="2"':''}>${tot.n}</td>
+<td class="R">${fm(tot.a)}</td><td class="R">${fm(tot.m)}</td><td class="R">${fm(tot.j)}</td>
+<td class="C">${ph(tot.j,tot.m)}</td><td class="C">${ph(tot.j,tot.a)}</td>
+<td class="R">${fm(f)}</td>${kpiCell(`${prefix}_tot`,tot.j||0)}</tr>`;
+}
+function mkTable(rows,prefix,h2,tot,grand,sColor,lbl2){
+  const cg=h2
+    ?'<colgroup><col style="width:17%"><col style="width:9%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:7%"><col style="width:7%"><col style="width:12%"><col style="width:15%"></colgroup>'
+    :'<colgroup><col style="width:21%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:7%"><col style="width:7%"><col style="width:13%"><col style="width:16%"></colgroup>';
+  return `<div style="overflow-x:auto"><table>${cg}${tHead(lbl2,sColor)}<tbody>
+${rows.map((r,i)=>dRow(r,i,prefix,h2)).join('')}
+${tot?totR(tot,prefix,h2,'tot'):''}${grand?totR(grand,prefix,h2,'grand'):''}
+</tbody></table></div>`;
+}
+
+// ── 차트 헬퍼 ────────────────────────────────────────────────
+function mkChart(id,type,labels,datasets,opts){
+  if(chartInstances[id]){chartInstances[id].destroy();}
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  chartInstances[id]=new Chart(ctx,{
+    type,
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:11},boxWidth:12}},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{font:{size:10}}},
+        y:{ticks:{font:{size:10},callback:v=>fm(v)+'M'},beginAtZero:true}
+      },
+      ...opts
+    }
+  });
+}
+
+// ── 렌더 ─────────────────────────────────────────────────────
+function render(){
+  // 집계
+  const bR=BRAND_VENDORS.map(v=>({n:v,a:APR[v]||0,m:MAY[v]||0,j:JUN_V[v]||0}));
+  const bT={n:'브랜드관 합계',a:bR.reduce((s,r)=>s+r.a,0),m:bR.reduce((s,r)=>s+r.m,0),j:bR.reduce((s,r)=>s+r.j,0)};
+  const dR=DIRECT_DISPLAY.map(d=>({n:d.label,a:svM(APR,d.raw),m:svM(MAY,d.raw),j:svM(JUN_V,d.raw)}));
+  const dT={n:'직거래 합계',a:dR.reduce((s,r)=>s+r.a,0),m:dR.reduce((s,r)=>s+r.m,0),j:dR.reduce((s,r)=>s+r.j,0)};
+  const baroA=(APR['바로팜']||0)+(APR['바로팜 기획전']||0);
+  const baroM=(MAY['바로팜']||0)+(MAY['바로팜 기획전']||0);
+  const baroJ=(JUN_V['바로팜']||0)+(JUN_V['바로팜 기획전']||0);
+  const kbA=svM(APR,KENVUE_BRAND),kbM=svM(MAY,KENVUE_BRAND),kbJ=svM(JUN_V,KENVUE_BRAND);
+  const kdA=svM(APR,KENVUE_DIRECT),kdM=svM(MAY,KENVUE_DIRECT),kdJ=svM(JUN_V,KENVUE_DIRECT);
+  const bmsBrA=kbA+baroA,bmsBrM=kbM+baroM,bmsBrJ=kbJ+baroJ;
+  const bmsTA=bmsBrA+kdA,bmsTM=bmsBrM+kdM,bmsTJ=bmsBrJ+kdJ;
+
+  // Jun 아워팜 품목 (기본값 - 파일 업로드 시 덮어씀)
+  jEkdong=129.04;jHandok=162.20;jPb=11.87;jYuyooOtc=182.54;
+  jYuyoo=1392.26;jBaro=34.11;jElder=82.44;jBiotic=13.59;
+  jBaRoKom=25.95;jDinew=23.04;jHemchul=41.89;jCheon=30.94;
+  jAnsim=20.24;jBaroscon=13.44;
+  jNizoral=177.02;jNico=277.56;jKetotop=243.11;
+  jCream=25.34;jMask=4.76;jSun=16.32;jJuvelook=41.04;
+  if(JUN_ROWS.length){
+    const jOtcTot=gskw(JUN_ROWS,null,OTC_V);
+    jEkdong=gskw(JUN_ROWS,'경동',OTC_V);jHandok=gskw(JUN_ROWS,'한독',OTC_V);
+    jPb=sumKws(JUN_ROWS,PB_KW,OTC_V);jYuyooOtc=jOtcTot-jEkdong-jHandok;
+    jYuyoo=gskw(JUN_ROWS,null,YUYOO_V);
+    jBaro=gskw(JUN_ROWS,'멀티비타민 바로타민',null);
+    jElder=gskw(JUN_ROWS,'엘더베리',null);jBiotic=gskw(JUN_ROWS,'바로바이오틱스',null);
+    jBaRoKom=gskw(JUN_ROWS,'바로콤',null);jDinew=gskw(JUN_ROWS,'디뉴키업',null);
+    jHemchul=gskw(JUN_ROWS,'헴철',null);jCheon=sumKws(JUN_ROWS,CHEON_KW,YUYOO_V);
+    jAnsim=gskw(JUN_ROWS,'안심요',null);jBaroscon=gskw(JUN_ROWS,'바로스콘',null);
+    jNizoral=gskw(JUN_ROWS,'니조랄',['휴온스','아워팜(OTC)']);
+    jNico=gskw(JUN_ROWS,'니코레트',KENVUE_BRAND);
+    jKetotop=gskw(JUN_ROWS,'케토톱',['한독','아워팜(OTC)']);
+    jCream=gskw(JUN_ROWS,'PDRN EGF 크림',null);
+    jMask=gskw(JUN_ROWS,'리쥬비네이팅 마스크',null);
+    jSun=gskw(JUN_ROWS,'수분선크림',null);
+  }
+
+  // 바로팜 Total (연동몰 포함) — 수기 또는 OCR로 입력된 값 사용
+  const bfTotA = BAROFARM_TOTAL_APR || baroA;
+  const bfTotM = BAROFARM_TOTAL_MAY || baroM;
+  const bfTotJ = BAROFARM_TOTAL_JUN || baroJ;
+
+  // WD 표시
+  document.getElementById('wd-refdate').textContent=WD_REF;
+  document.getElementById('wd-el').textContent=WD_E+'일';
+  document.getElementById('wd-tot').textContent=WD_T+'일';
+  const wdProg = WD_T>0?(WD_E/WD_T*100).toFixed(2)+'%':'-';
+  const wdProgEl = document.getElementById('wd-prog');
+  if(wdProgEl) wdProgEl.textContent=wdProg;
+  // 헤더 배지 동적 업데이트
+  const badge = document.getElementById('hdr-badge');
+  if(badge) badge.textContent='📅 '+WD_REF+' 기준  |  Jun W.D '+WD_E+'/'+WD_T+'일 ('+wdProg+')';
+  const hdrSub = document.getElementById('hdr-sub');
+  if(hdrSub) hdrSub.textContent='단위: 백만원(M) · 소수점 2자리 | KPI 수기 입력 가능 | 기준일: '+WD_REF+' (경과 W.D '+WD_E+'일/총 '+WD_T+'일 · '+wdProg+')';
+  // drop-area도 동적 업데이트 (파일 업로드 전 상태일 때)
+  if(!JUN_ROWS.length){
+    const da=document.getElementById('drop-area');
+    if(da) da.innerHTML='✅ <strong>'+WD_REF+' 기준</strong> | Jun MTD 경과 <strong>'+WD_E+'일</strong>/총 '+WD_T+'일 ('+wdProg+') | 새 데이터 업데이트 시 파일 드래그 또는 클릭';
+  }
+
+  // 요약카드
+  document.getElementById('summary').innerHTML=[
+    {lbl:'Jun MTD 전체',val:fm(JUN_TOT)+'M',sub:`vs May ${MAY_TOT?((JUN_TOT/MAY_TOT-1)*100).toFixed(1)+'%':'-'}`},
+    {lbl:'마감 예상 (전체)',val:fm(fcst(JUN_TOT))+'M',sub:`Daily Avg × ${WD_T}일`},
+    {lbl:'브랜드관 MTD',val:fm(bT.j)+'M',sub:`마감예상 ${fm(fcst(bT.j))}M`},
+    {lbl:'직거래 MTD',val:fm(dT.j)+'M',sub:`마감예상 ${fm(fcst(dT.j))}M`},
+  ].map(c=>`<div class="scard"><div class="lbl">${c.lbl}</div><div class="val">${c.val}</div><div class="sub">${c.sub}</div></div>`).join('');
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Dashboard 탭
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // 억 단위 포매터 (소수점 2자리)
+  function fa(n){ // 억
+    if(n==null||isNaN(n))return '-';
+    return (Math.round(n*100)/100).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})+'억';
+  }
+  function fp(n){ // % 소수점 2자리
+    if(n==null||isNaN(n)||!isFinite(n))return '-';
+    return (Math.round(n*100)/100).toFixed(2)+'%';
+  }
+  function M2A(m){ return m/100; } // 백만→억
+
+  // 집계값 억 단위 변환
+  const APR_TOT_A=M2A(APR_TOT), MAY_TOT_A=M2A(MAY_TOT), JUN_TOT_A=M2A(JUN_TOT);
+  const bTa=M2A(bT.a), bTm=M2A(bT.m), bTj=M2A(bT.j);
+  const dTa=M2A(dT.a), dTm=M2A(dT.m), dTj=M2A(dT.j);
+  const fcTotJ=M2A(fcst(JUN_TOT)), fcBrJ=M2A(fcst(bT.j)), fcDrJ=M2A(fcst(dT.j));
+
+  // 점유율
+  const shrBrandApr=bTa/APR_TOT_A*100, shrDirectApr=dTa/APR_TOT_A*100;
+  const shrBrandMay=bTm/MAY_TOT_A*100, shrDirectMay=dTm/MAY_TOT_A*100;
+  const shrBrandJun=bTj/JUN_TOT_A*100, shrDirectJun=dTj/JUN_TOT_A*100;
+
+  // DailyAvg
+  const avgApr=APR_TOT_A/22, avgMay=MAY_TOT_A/18, avgJun=JUN_TOT_A/WD_E;
+
+  // Jun vs May 진행율 (마감예상 기준)
+  const progVsMay = fcTotJ/MAY_TOT_A*100;
+  const progVsApr = fcTotJ/APR_TOT_A*100;
+  const progBrandVsMay = fcBrJ/bTm*100;
+  const progDirectVsMay = fcDrJ/dTm*100;
+
+  // Jun 일별 데이터 (억 단위)
+  const daysArr = Object.keys(DAILY_JUN).sort((a,b)=>+a-+b);
+  const dayLabels = daysArr.map(d=>`6/${d}`);
+  const dayValsA  = daysArr.map(d=>+(DAILY_JUN[d]/100).toFixed(2));
+  const isWD = d=>{
+    const dt=new Date(2026,5,+d);
+    const key=`2026-06-${String(d).padStart(2,'0')}`;
+    return dt.getDay()!==0&&dt.getDay()!==6&&!HOLIDAYS_2026.includes(key);
+  };
+
+  // ── Dashboard HTML ────────────────────────────────────────────
+  document.getElementById('p-dash').innerHTML=`
+<div class="sec-head c0">📈 Dashboard <span>— 단위: 억원 / % 소수점 2자리</span></div>
+
+<!-- KPI 카드 2행 -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px 0">
+  ${[
+    {lbl:'Jun MTD 전체',val:fa(JUN_TOT_A),sub:`Daily Avg ${fa(avgJun)} / W.D ${WD_E}일`,color:'#1F3864'},
+    {lbl:'마감 예상',val:fa(fcTotJ),sub:`vs May ${fp(progVsMay)} / vs Apr ${fp(progVsApr)}`,color:'#2E75B6'},
+    {lbl:'브랜드관 MTD',val:fa(bTj),sub:`점유율 ${fp(shrBrandJun)} / 마감예상 ${fa(fcBrJ)}`,color:'#1F6B3E'},
+    {lbl:'직거래 MTD',val:fa(dTj),sub:`점유율 ${fp(shrDirectJun)} / 마감예상 ${fa(fcDrJ)}`,color:'#7B2D8B'},
+  ].map(c=>`<div style="background:#fff;border-radius:8px;padding:10px 12px;border-left:3px solid ${c.color};border-top:0.5px solid #DDE3EB;border-right:0.5px solid #DDE3EB;border-bottom:0.5px solid #DDE3EB">
+    <div style="font-size:11px;color:#666;margin-bottom:3px">${c.lbl}</div>
+    <div style="font-size:18px;font-weight:600;color:${c.color}">${c.val}</div>
+    <div style="font-size:10px;color:#999;margin-top:2px">${c.sub}</div>
+  </div>`).join('')}
+</div>
+
+<div class="chart-grid" style="padding-top:10px">
+
+  <!-- 1. 월별 전체 매출 (억) -->
+  <div class="chart-box">
+    <div class="chart-title">📊 월별 전체 매출 (억원)
+      <span class="ct-badge">Apr ${fa(APR_TOT_A)} · May ${fa(MAY_TOT_A)} · Jun MTD ${fa(JUN_TOT_A)}</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+  </div>
+
+  <!-- 2. Jun MTD 일별 (억) -->
+  <div class="chart-box">
+    <div class="chart-title">📅 Jun. MTD 일별 매출 (억원)
+      <span class="ct-badge">파란색: 영업일 / 회색: 주말·공휴일</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+  </div>
+
+  <!-- 3. 브랜드관 vs 직거래 점유율 3개월 비교 -->
+  <div class="chart-box">
+    <div class="chart-title">🥧 브랜드관 · 직거래 점유율 (%)
+      <span class="ct-badge">소수점 2자리</span>
+    </div>
+    <div style="overflow-x:auto;margin-bottom:8px">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr>
+            <th style="padding:4px 8px;background:#E8EEF5;text-align:left">구분</th>
+            <th style="padding:4px 8px;background:#1F3864;color:#BDD7EE;text-align:right">Apr. (22일)</th>
+            <th style="padding:4px 8px;background:#1F3864;color:#BDD7EE;text-align:right">May (18일)</th>
+            <th style="padding:4px 8px;background:#2E75B6;color:#fff;text-align:right">Jun MTD (${WD_E}일)</th>
+            <th style="padding:4px 8px;background:#2E75B6;color:#fff;text-align:right">마감예상</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#EEF7EE">
+            <td style="padding:4px 8px;font-weight:500;color:#1F6B3E">🏪 브랜드관</td>
+            <td style="padding:4px 8px;text-align:right">${fa(bTa)}<br><span style="color:#1F6B3E;font-size:10px">${fp(shrBrandApr)}</span></td>
+            <td style="padding:4px 8px;text-align:right">${fa(bTm)}<br><span style="color:#1F6B3E;font-size:10px">${fp(shrBrandMay)}</span></td>
+            <td style="padding:4px 8px;text-align:right">${fa(bTj)}<br><span style="color:#1F6B3E;font-size:10px">${fp(shrBrandJun)}</span></td>
+            <td style="padding:4px 8px;text-align:right;font-weight:500">${fa(fcBrJ)}<br><span style="color:${progBrandVsMay>=100?'#1F6B3E':'#C0392B'};font-size:10px">vs May ${fp(progBrandVsMay)}</span></td>
+          </tr>
+          <tr style="background:#F5EEF8">
+            <td style="padding:4px 8px;font-weight:500;color:#7B2D8B">🤝 직거래</td>
+            <td style="padding:4px 8px;text-align:right">${fa(dTa)}<br><span style="color:#7B2D8B;font-size:10px">${fp(shrDirectApr)}</span></td>
+            <td style="padding:4px 8px;text-align:right">${fa(dTm)}<br><span style="color:#7B2D8B;font-size:10px">${fp(shrDirectMay)}</span></td>
+            <td style="padding:4px 8px;text-align:right">${fa(dTj)}<br><span style="color:#7B2D8B;font-size:10px">${fp(shrDirectJun)}</span></td>
+            <td style="padding:4px 8px;text-align:right;font-weight:500">${fa(fcDrJ)}<br><span style="color:${progDirectVsMay>=100?'#1F6B3E':'#C0392B'};font-size:10px">vs May ${fp(progDirectVsMay)}</span></td>
+          </tr>
+          <tr style="background:#FFF9C4">
+            <td style="padding:4px 8px;font-weight:600;color:#7F6000">합계</td>
+            <td style="padding:4px 8px;text-align:right;font-weight:500">${fa(APR_TOT_A)}</td>
+            <td style="padding:4px 8px;text-align:right;font-weight:500">${fa(MAY_TOT_A)}</td>
+            <td style="padding:4px 8px;text-align:right;font-weight:500">${fa(JUN_TOT_A)}</td>
+            <td style="padding:4px 8px;text-align:right;font-weight:600">${fa(fcTotJ)}<br><span style="color:${progVsMay>=100?'#1F6B3E':'#C0392B'};font-size:10px">vs May ${fp(progVsMay)}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-wrap" style="height:160px"><canvas id="chart-share"></canvas></div>
+  </div>
+
+  <!-- 4. 진행율 현황 (KPI 대비) -->
+  <div class="chart-box">
+    <div class="chart-title">🎯 마감예상 진행율 (KPI 대비, %)
+      <span class="ct-badge">소수점 2자리</span>
+    </div>
+    <div id="progress-bars" style="padding:4px 0"></div>
+  </div>
+
+  <!-- 5. DailyAvg 비교 -->
+  <div class="chart-box wide">
+    <div class="chart-title">📈 월별 Daily Average 비교 (억원/일)
+      <span class="ct-badge">Apr ${fa(avgApr)}/일 · May ${fa(avgMay)}/일 · Jun ${fa(avgJun)}/일</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${[
+        {mon:'Apr.',wd:22,tot:APR_TOT_A,avg:avgApr,color:'#3498db'},
+        {mon:'May',wd:18,tot:MAY_TOT_A,avg:avgMay,color:'#9b59b6'},
+        {mon:'Jun MTD',wd:WD_E,tot:JUN_TOT_A,avg:avgJun,color:'#e67e22'},
+      ].map(m=>{
+        const barW=Math.min(100,m.avg/avgApr*100);
+        return `<div style="background:#F8FBFF;border-radius:6px;padding:10px 12px;border:0.5px solid #DDE3EB">
+          <div style="font-size:11px;color:#666">${m.mon} (W.D ${m.wd}일)</div>
+          <div style="font-size:16px;font-weight:600;color:${m.color};margin:4px 0">${fa(m.avg)}<span style="font-size:11px;font-weight:400;color:#888">/일</span></div>
+          <div style="font-size:10px;color:#aaa;margin-bottom:4px">총 ${fa(m.tot)}</div>
+          <div style="background:#eee;border-radius:3px;height:6px"><div style="background:${m.color};width:${barW}%;height:6px;border-radius:3px"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="chart-wrap" style="height:160px"><canvas id="chart-daily-avg"></canvas></div>
+  </div>
+
+</div>`;
+
+  // ── 차트 렌더 ──────────────────────────────────────────────────
+  setTimeout(()=>{
+    // 1. 월별 전체 매출 (억)
+    const faV=v=>parseFloat(fa(v).replace(/[^0-9.]/g,''));
+    mkChart('chart-monthly','bar',
+      ['Apr. (22일)','May (18일)',`Jun MTD (${WD_E}일)`,'Jun 마감예상'],
+      [
+        {label:'브랜드관(억)',data:[+bTa.toFixed(2),+bTm.toFixed(2),+bTj.toFixed(2),+fcBrJ.toFixed(2)],
+         backgroundColor:['#2ecc71','#2ecc71','#27ae60','rgba(39,174,96,0.35)'],borderRadius:4},
+        {label:'직거래(억)',data:[+dTa.toFixed(2),+dTm.toFixed(2),+dTj.toFixed(2),+fcDrJ.toFixed(2)],
+         backgroundColor:['#9b59b6','#9b59b6','#8e44ad','rgba(142,68,173,0.35)'],borderRadius:4},
+      ],{
+        plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:10}}},
+        scales:{
+          x:{ticks:{font:{size:10}}},
+          y:{ticks:{font:{size:10},callback:v=>v.toFixed(2)+'억'},beginAtZero:true}
+        }
+      });
+
+    // 2. Jun 일별 (억)
+    if(dayLabels.length){
+      mkChart('chart-daily','bar',dayLabels,[{
+        label:'일별 매출(억)',data:dayValsA,
+        backgroundColor:daysArr.map(d=>isWD(d)?'#3498db':'#BDC3C7'),
+        borderRadius:3
+      }],{scales:{y:{ticks:{callback:v=>v.toFixed(2)+'억'},beginAtZero:true}}});
+    } else {
+      mkChart('chart-daily','bar',['데이터 없음'],[{label:'일별 매출',data:[0],backgroundColor:'#BDC3C7'}],{});
+    }
+
+    // 3. 점유율 도넛 (3개월)
+    if(chartInstances['chart-share']){chartInstances['chart-share'].destroy();}
+    const shCtx=document.getElementById('chart-share');
+    if(shCtx){
+      chartInstances['chart-share']=new Chart(shCtx,{
+        type:'bar',
+        data:{
+          labels:['Apr.','May','Jun MTD'],
+          datasets:[
+            {label:'브랜드관(%)',data:[+shrBrandApr.toFixed(2),+shrBrandMay.toFixed(2),+shrBrandJun.toFixed(2)],backgroundColor:'rgba(39,174,96,0.7)',borderRadius:3},
+            {label:'직거래(%)',data:[+shrDirectApr.toFixed(2),+shrDirectMay.toFixed(2),+shrDirectJun.toFixed(2)],backgroundColor:'rgba(142,68,173,0.7)',borderRadius:3},
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{
+            legend:{position:'top',labels:{font:{size:10},boxWidth:10}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`}}
+          },
+          scales:{
+            x:{stacked:false,ticks:{font:{size:10}}},
+            y:{ticks:{font:{size:10},callback:v=>v.toFixed(1)+'%'},beginAtZero:true,max:100}
+          }
+        }
+      });
+    }
+
+    // 4. 진행율 바 (KPI 대비)
+    const groups=[
+      {n:'브랜드관',j:bTj,fc:fcBrJ,color:'#1F6B3E',id:'dash_brand'},
+      {n:'직거래',j:dTj,fc:fcDrJ,color:'#7B2D8B',id:'dash_direct'},
+      {n:'전체',j:JUN_TOT_A,fc:fcTotJ,color:'#1F3864',id:'dash_total'},
+    ];
+    document.getElementById('progress-bars').innerHTML=groups.map(g=>{
+      const kv=parseFloat((KPI[g.id]||'').replace(/,/g,'').replace('억',''));
+      const achv=kv>0?Math.min(200,g.fc/kv*100):0;
+      const prog=kv>0?Math.min(100,g.j/kv*100):0;
+      const barC=achv>=100?'#2ecc71':achv>=80?'#f39c12':'#e74c3c';
+      return `<div style="margin-bottom:12px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+  <div style="width:70px;font-size:12px;font-weight:600;color:${g.color}">${g.n}</div>
+  <div style="font-size:11px;color:#555">MTD <strong>${fa(g.j)}</strong></div>
+  <div style="font-size:11px;color:#555">마감예상 <strong>${fa(g.fc)}</strong></div>
+  <input id="${g.id}" placeholder="KPI 입력 (억)" value="${KPI[g.id]||''}"
+    style="border:1px solid #E0A06A;border-radius:4px;padding:2px 7px;font-size:11px;width:120px;color:#7F4000;background:#FFF3E0"
+    oninput="KPI['${g.id}']=this.value;render()">
+  ${kv>0?`<span style="font-size:11px;font-weight:600;color:${barC}">마감달성 ${fp(achv)} / MTD진행 ${fp(prog)}</span>`:'<span style="font-size:10px;color:#aaa">← KPI 입력 시 자동 계산</span>'}
+</div>
+${kv>0?`
+<div style="background:#eee;border-radius:4px;height:10px;overflow:hidden;margin-bottom:2px">
+  <div style="background:${barC};width:${Math.min(100,achv)}%;height:100%;border-radius:4px;transition:width .5s"></div>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:9px;color:#aaa">
+  <span>0%</span><span style="color:${barC};font-weight:500">마감${fp(achv)}</span><span>100%</span>
+</div>`:'<div style="background:#eee;border-radius:4px;height:10px"></div>'}
+</div>`;
+    }).join('');
+
+    // 5. DailyAvg 라인차트
+    mkChart('chart-daily-avg','bar',
+      ['Apr. (22일)','May (18일)',`Jun MTD (${WD_E}일)`],
+      [
+        {label:'Daily Avg (억/일)',
+         data:[+avgApr.toFixed(2),+avgMay.toFixed(2),+avgJun.toFixed(2)],
+         backgroundColor:['#3498db','#9b59b6','#e67e22'],
+         borderRadius:4,barThickness:40},
+      ],{
+        scales:{y:{ticks:{callback:v=>v.toFixed(2)+'억'},beginAtZero:true}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(2)}억/일`}}
+        }
+      });
+  },150);
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 바로팜 매출 Summary 탭
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 바로팜 매출 Summary 탭
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 바로팜몰 Apr/May: 이미지 입력값 우선, 없으면 Raw 집계값
+  const baroA_final = BAROFARM_BARO_APR || baroA;
+  const baroM_final = BAROFARM_BARO_MAY || baroM;
+  const baroJ_final = BAROFARM_BARO_JUN || baroJ;
+  // 예치금 Apr/May
+  const depCA = DEPOSIT_CHARGE_APR, depCM = DEPOSIT_CHARGE_MAY;
+  const depUA = DEPOSIT_USE_APR, depUM = DEPOSIT_USE_MAY;
+
+  const bmsRows=[
+    {lbl:'바로팜 Total',sub:'연동몰 포함',a:bfTotA,m:bfTotM,j:bfTotJ,rowCls:'total-row',id:'bms_total',isTotal:true},
+    {lbl:'바로팜몰',sub:'바로팜 자체몰',a:baroA_final,m:baroM_final,j:baroJ_final,rowCls:'baro',id:'bms_0'},
+    {lbl:'예치금 충전',sub:'',inpValA:depCA,inpValM:depCM,inpVal:DEPOSIT_CHARGE_JUN,inp:true,id:'bms_1'},
+    {lbl:'예치금 사용', sub:'',inpValA:depUA,inpValM:depUM,inpVal:DEPOSIT_USE_JUN,inp:true,id:'bms_2'},
+    {lbl:'BMS',sub:'브랜드관',a:bT.a,m:bT.m,j:bT.j,id:'bms_3'},
+    {lbl:'',sub:'직거래',a:dT.a,m:dT.m,j:dT.j,id:'bms_4'},
+  ];
+  const bmsColG='<colgroup><col style="width:12%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:7%"><col style="width:7%"><col style="width:12%"><col style="width:19%"></colgroup>';
+  const bmsBody=bmsRows.map((r,i)=>{
+    if(r.inp){
+      const fa2=v=>v!=null?`<span style="color:#1F3864;font-weight:500">${fm(v)}</span>`:'<span class="na">-</span>';
+      const junVal=r.inpVal!=null?r.inpVal:null;
+      const aprVal=r.inpValA!=null?r.inpValA:null;
+      const mayVal=r.inpValM!=null?r.inpValM:null;
+      const fcVal=junVal!=null&&WD_E>0?fcst(junVal):null;
+      const vm1=junVal!=null&&mayVal!=null&&mayVal>0?ph(junVal,mayVal):'<span class="na">-</span>';
+      const vm2=junVal!=null&&aprVal!=null&&aprVal>0?ph(junVal,aprVal):'<span class="na">-</span>';
+      return `<tr class="${i%2===0?'ev':'od'}">
+<td class="nm">${r.lbl}</td><td class="sub" style="font-style:italic">이미지·수기</td>
+<td class="R">${fa2(aprVal)}</td>
+<td class="R">${fa2(mayVal)}</td>
+<td class="R">${fa2(junVal)}</td>
+<td class="C">${vm1}</td>
+<td class="C">${vm2}</td>
+<td class="R">${fcVal!=null?fm(fcVal):'-'}</td>
+<td class="ki" style="text-align:right;font-size:10px;color:#aaa">-</td></tr>`;
+    }
+    const cls2=r.rowCls?r.rowCls:(i%2===0?'ev':'od');
+    const f=fcst(r.j||0);
+    return `<tr class="${cls2}">
+<td class="nm" style="font-weight:${r.isTotal||r.lbl==='BMS'?600:400}">${r.lbl}</td>
+<td class="sub" style="font-style:italic">${r.sub||''}</td>
+<td class="R">${fm(r.a)}</td><td class="R">${fm(r.m)}</td>
+<td class="R">${fm(r.j)}</td>
+<td class="C">${ph(r.j,r.m)}</td><td class="C">${ph(r.j,r.a)}</td>
+<td class="R">${fm(f)}</td>${kpiCell(r.id,r.j||0)}</tr>`;
+  }).join('');
+
+  // 연동몰 이미지 업로드 영역
+  const imgUploadArea=`
+<div style="padding:10px 14px;background:#FFF8F3;border-top:0.5px solid #F0D0B0">
+  <div style="font-size:12px;font-weight:600;color:#7B3F00;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+    📸 캡쳐 이미지 업로드 (Ctrl+V 붙여넣기 또는 드래그)
+    <span style="font-weight:400;font-size:11px;color:#999">— claude.ai에서만 자동 인식 | GitHub Pages에서는 수기 입력 이용</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+    <!-- 1. 바로팜 Total (월별 주문금액) -->
+    <div style="border:1.5px dashed #F0A06A;border-radius:6px;padding:8px;background:#FFFAF5">
+      <div style="font-size:11px;font-weight:600;color:#7B3F00;margin-bottom:4px">① 바로팜 Total <span style="font-weight:400;color:#aaa">(월별 주문금액)</span></div>
+      <div class="paste-zone" id="paste-zone-total" data-type="total"
+        tabindex="0"
+        style="border:1px dashed #F0A06A;border-radius:4px;padding:10px 6px;text-align:center;cursor:default;font-size:11px;color:#888;background:#fff;min-height:55px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;outline:none;transition:all .2s"
+        onclick="activateZone('total')"
+        onfocus="activateZone('total')">
+        <span style="font-size:18px">📋</span>
+        <span style="font-weight:500">Ctrl+V 붙여넣기</span>
+        <span style="font-size:10px;color:#bbb">이 영역 클릭 후 Ctrl+V</span>
+      </div>
+      <button onclick="activateZone('total');document.getElementById('img-inp-total').click()"
+        style="width:100%;margin-top:4px;padding:5px 0;background:#FFF0E0;border:1px solid #F0A06A;border-radius:4px;font-size:11px;color:#555;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500">
+        📁 파일 업로드
+      </button>
+      <input id="img-inp-total" type="file" accept="image/*" style="display:none" onchange="handleImg(event,'total')">
+      <div id="prev-total" style="margin-top:4px"></div>
+      <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">Jun:</span>
+          <input id="bf-total-jun" type="number" step="0.01" placeholder="Jun MTD (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_TOTAL_JUN||''}" oninput="updateBFTotal()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">Apr:</span>
+          <input id="bf-total-apr" type="number" step="0.01" placeholder="Apr 확정 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_TOTAL_APR||''}" oninput="updateBFTotal()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">May:</span>
+          <input id="bf-total-may" type="number" step="0.01" placeholder="May 확정 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_TOTAL_MAY||''}" oninput="updateBFTotal()">
+        </div>
+      </div>
+    </div>
+    <!-- 2. 바로팜몰 (바로몰 주문금액) -->
+    <div style="border:1.5px dashed #7BAFD0;border-radius:6px;padding:8px;background:#F5FAFF">
+      <div style="font-size:11px;font-weight:600;color:#1F5080;margin-bottom:4px">② 바로팜몰 <span style="font-weight:400;color:#aaa">(바로몰 주문금액)</span></div>
+      <div class="paste-zone" id="paste-zone-baro" data-type="baro"
+        tabindex="0"
+        style="border:1px dashed #7BAFD0;border-radius:4px;padding:10px 6px;text-align:center;cursor:default;font-size:11px;color:#888;background:#fff;min-height:55px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;outline:none;transition:all .2s"
+        onclick="activateZone('baro')"
+        onfocus="activateZone('baro')">
+        <span style="font-size:18px">📋</span>
+        <span style="font-weight:500">Ctrl+V 붙여넣기</span>
+        <span style="font-size:10px;color:#bbb">이 영역 클릭 후 Ctrl+V</span>
+      </div>
+      <button onclick="activateZone('baro');document.getElementById('img-inp-baro').click()"
+        style="width:100%;margin-top:4px;padding:5px 0;background:#EBF5FB;border:1px solid #7BAFD0;border-radius:4px;font-size:11px;color:#555;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500">
+        📁 파일 업로드
+      </button>
+      <input id="img-inp-baro" type="file" accept="image/*" style="display:none" onchange="handleImg(event,'baro')">
+      <div id="prev-baro" style="margin-top:4px"></div>
+      <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">Jun:</span>
+          <input id="bf-baro-jun" type="number" step="0.01" placeholder="Jun MTD (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_BARO_JUN||''}" oninput="updateBFBaro()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">Apr:</span>
+          <input id="bf-baro-apr" type="number" step="0.01" placeholder="Apr 확정 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_BARO_APR||''}" oninput="updateBFBaro()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">May:</span>
+          <input id="bf-baro-may" type="number" step="0.01" placeholder="May 확정 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${BAROFARM_BARO_MAY||''}" oninput="updateBFBaro()">
+        </div>
+      </div>
+    </div>
+    <!-- 3. 예치금 (예치금 금액) -->
+    <div style="border:1.5px dashed #9B8ED0;border-radius:6px;padding:8px;background:#F8F5FF">
+      <div style="font-size:11px;font-weight:600;color:#4B2D8B;margin-bottom:4px">③ 예치금 <span style="font-weight:400;color:#aaa">(충전/사용)</span></div>
+      <div class="paste-zone" id="paste-zone-deposit" data-type="deposit"
+        tabindex="0"
+        style="border:1px dashed #9B8ED0;border-radius:4px;padding:10px 6px;text-align:center;cursor:default;font-size:11px;color:#888;background:#fff;min-height:55px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;outline:none;transition:all .2s"
+        onclick="activateZone('deposit')"
+        onfocus="activateZone('deposit')">
+        <span style="font-size:18px">📋</span>
+        <span style="font-weight:500">Ctrl+V 붙여넣기</span>
+        <span style="font-size:10px;color:#bbb">이 영역 클릭 후 Ctrl+V</span>
+      </div>
+      <button onclick="activateZone('deposit');document.getElementById('img-inp-deposit').click()"
+        style="width:100%;margin-top:4px;padding:5px 0;background:#F5EEF8;border:1px solid #9B8ED0;border-radius:4px;font-size:11px;color:#555;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500">
+        📁 파일 업로드
+      </button>
+      <input id="img-inp-deposit" type="file" accept="image/*" style="display:none" onchange="handleImg(event,'deposit')">
+      <div id="prev-deposit" style="margin-top:4px"></div>
+      <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:10px;color:#555;font-weight:500">Jun MTD</div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">충전:</span>
+          <input id="bf-dep-charge" type="number" step="0.01" placeholder="충전 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_CHARGE_JUN||''}" oninput="updateDeposit()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">사용:</span>
+          <input id="bf-dep-use" type="number" step="0.01" placeholder="사용 (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_USE_JUN||''}" oninput="updateDeposit()">
+        </div>
+        <div style="font-size:10px;color:#555;font-weight:500;margin-top:2px">Apr / May (확정)</div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">Apr:</span>
+          <input id="bf-dep-charge-apr" type="number" step="0.01" placeholder="충전 Apr (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_CHARGE_APR||''}" oninput="updateDeposit()">
+          <span style="font-size:10px;color:#888;width:28px">사용:</span>
+          <input id="bf-dep-use-apr" type="number" step="0.01" placeholder="사용 Apr (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_USE_APR||''}" oninput="updateDeposit()">
+        </div>
+        <div style="display:flex;gap:3px;align-items:center">
+          <span style="font-size:10px;color:#888;width:28px">May:</span>
+          <input id="bf-dep-charge-may" type="number" step="0.01" placeholder="충전 May (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_CHARGE_MAY||''}" oninput="updateDeposit()">
+          <span style="font-size:10px;color:#888;width:28px">사용:</span>
+          <input id="bf-dep-use-may" type="number" step="0.01" placeholder="사용 May (M)"
+            style="flex:1;border:1px solid #ddd;border-radius:3px;padding:2px 5px;font-size:11px"
+            value="${DEPOSIT_USE_MAY||''}" oninput="updateDeposit()">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="ocr-status" style="font-size:11px;color:#888;text-align:center"></div>
+</div>`;
+
+  document.getElementById('p-bms').innerHTML=`
+<div class="sec-head c1">▶ 바로팜 매출 Summary <span>(바로팜 Total · 바로팜몰 · 예치금 · 켄뷰)</span></div>
+${imgUploadArea}
+<div style="overflow-x:auto"><table>${bmsColG}
+<thead><tr>
+  <th class="L h1" colspan="2">항목</th>
+  <th class="C h1">Apr. W.D 22일</th><th class="C h1">May W.D 18일</th>
+  <th class="C h2" colspan="3">Jun. MTD (경과 ${WD_E}일/총 ${WD_T}일)</th>
+  <th class="C h1">마감예상</th><th class="C h3">KPI/달성율</th>
+</tr><tr>
+  <th class="L hg" colspan="2"></th>
+  <th class="R hg">M</th><th class="R hg">M</th>
+  <th class="R hg">M</th><th class="C hg">vs M-1</th><th class="C hg">vs M-2</th>
+  <th class="R hg">Avg×${WD_T}일</th>
+  <th class="R hg" style="background:#FFF3E0;color:#7F4000">목표M/달성율</th>
+</tr></thead>
+<tbody>${bmsBody}
+<tr class="tot"><td class="nm" colspan="2">BMS 합계</td>
+<td class="R">${fm(bT.a+dT.a)}</td><td class="R">${fm(bT.m+dT.m)}</td><td class="R">${fm(bT.j+dT.j)}</td>
+<td class="C">${ph(bT.j+dT.j,bT.m+dT.m)}</td><td class="C">${ph(bT.j+dT.j,bT.a+dT.a)}</td>
+<td class="R">${fm(fcst(bT.j+dT.j))}</td>${kpiCell('bms_tot',bT.j+dT.j)}</tr>
+
+</tbody></table></div>
+<p class="note">※ 바로팜 Total = 바로팜몰 + 연동몰 | 예치금 충전·사용: 노란 셀 직접 입력(M) | 기준일: ${WD_REF}</p>`;
+
+  // paste-zone 드롭 + focus 이벤트 재등록
+  ['total','baro','deposit'].forEach(type=>{
+    const zone=document.getElementById('paste-zone-'+type);
+    if(!zone)return;
+    zone.addEventListener('focus',()=>activateZone(type));
+    zone.addEventListener('mousedown',()=>{ _activeZone=type; });
+    zone.addEventListener('dragover',e=>{e.preventDefault();activateZone(type);});
+    zone.addEventListener('dragleave',()=>{
+      zone.style.boxShadow='none';
+      zone.style.background='#fff';
+    });
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(e.dataTransfer.files[0])processImg(e.dataTransfer.files[0],type);
+    });
+    // paste 이벤트도 각 zone에 직접 등록 (중복 처리 방지)
+    zone.addEventListener('paste',e=>{
+      const items=e.clipboardData?.items||[];
+      for(let i=0;i<items.length;i++){
+        if(items[i].type.startsWith('image/')){
+          const file=items[i].getAsFile();
+          if(file){ processImg(file,type); e.preventDefault(); return; }
+        }
+      }
+    });
+  });
+
+  // 브랜드관
+  document.getElementById('p-brand').innerHTML=`
+<div class="sec-head c2">🏪 브랜드관 <span>(켄뷰 A/B/C · 바로팜 · 일반 도매상)</span></div>
+${mkTable(bR,'brand',false,bT,null,'#1F6B3E',null)}`;
+
+  // 직거래
+  document.getElementById('p-direct').innerHTML=`
+<div class="sec-head c3">🤝 직거래 <span>(켄뷰 · 영진 · 한독KAM · 익수 · 코오롱)</span></div>
+${mkTable(dR,'direct',false,dT,null,'#7B2D8B',null)}`;
+
+  // 주요품목
+  document.getElementById('p-prod').innerHTML=`
+<div class="sec-head c4">▶ 주요 품목 현황 (켄뷰·한독·레비온)</div>
+${mkTable([
+  {n:'니조랄',v:'휴온스 & 아워팜OTC',a:APR_P.니조랄,m:MAY_P.니조랄,j:jNizoral},
+  {n:'니코레트',v:'켄뷰(직거래A/B/C)',a:APR_P.니코레트,m:MAY_P.니코레트,j:jNico},
+  {n:'케토톱 플라스타',v:'한독 & 아워팜OTC',a:APR_P.케토톱,m:MAY_P.케토톱,j:jKetotop},
+  {n:'레비온RX PDRN EGF 크림',v:'레비온 & 아워팜',a:APR_P.크림,m:MAY_P.크림,j:jCream},
+  {n:'리쥬비네이팅 마스크',v:'',a:APR_P.마스크,m:MAY_P.마스크,j:jMask},
+  {n:'리쥬비네이팅 수분선크림',v:'',a:APR_P.선크림,m:MAY_P.선크림,j:jSun},
+  {n:'쥬베룩 PDLLA 크림',v:'아워팜',a:416.34,m:56.01,j:jJuvelook},
+],'prod',true,null,null,'#4472C4','공급사')}`;
+
+  // 아워팜
+  const owCg='<colgroup><col style="width:20%"><col style="width:9%"><col style="width:11%"><col style="width:11%"><col style="width:11%"><col style="width:7%"><col style="width:7%"><col style="width:12%"><col style="width:12%"></colgroup>';
+  document.getElementById('p-ow').innerHTML=`
+<div class="sec-head c5">▶ 아워팜 주요 품목 현황</div>
+<div style="overflow-x:auto"><table>${owCg}
+<thead><tr>
+  <th class="L h1">품목명</th><th class="L h1" style="font-size:9px;opacity:.8">도매 기준</th>
+  <th class="C h1">Apr. W.D 22일</th><th class="C h1">May W.D 18일</th>
+  <th class="C h2" colspan="3" style="background:#4A7C59">Jun. MTD (경과 ${WD_E}일/총 ${WD_T}일)</th>
+  <th class="C h1">마감예상</th><th class="C h3">KPI/달성율</th>
+</tr><tr>
+  <th class="L hg" colspan="2"></th>
+  <th class="R hg">M</th><th class="R hg">M</th>
+  <th class="R hg">M</th><th class="C hg">vs M-1</th><th class="C hg">vs M-2</th>
+  <th class="R hg">Avg×${WD_T}일</th>
+  <th class="R hg" style="background:#FFF3E0;color:#7F4000">목표M/달성율</th>
+</tr></thead>
+<tbody>${[
+  {n:'바로팜 PB',sub:'아워팜(OTC)',a:APR_OTC.pb,m:MAY_OTC.pb,j:jPb},
+  {n:'아워팜 경동',sub:'아워팜(OTC)',a:APR_OTC.경동,m:MAY_OTC.경동,j:jEkdong},
+  {n:'아워팜 유유_OTC',sub:'아워팜(OTC)',a:APR_OTC.유유,m:MAY_OTC.유유,j:jYuyooOtc},
+  {n:'아워팜 한독',sub:'아워팜(OTC)',a:APR_OTC.한독,m:MAY_OTC.한독,j:jHandok},
+  {n:'아워팜 유유_건식',sub:'아워팜+혜택전',a:APR_S.유유건식,m:MAY_S.유유건식,j:jYuyoo},
+  {n:'고함량 멀티비타민 바로타민',sub:'',a:APR_S.바로타민,m:MAY_S.바로타민,j:jBaro},
+  {n:'바로타민 kids 엘더베리맛',sub:'',a:APR_S.엘더베리,m:MAY_S.엘더베리,j:jElder},
+  {n:'바로바이오틱스',sub:'',a:APR_S.바로바이오틱스,m:MAY_S.바로바이오틱스,j:jBiotic},
+  {n:'바로콤',sub:'',a:APR_S.바로콤,m:MAY_S.바로콤,j:jBaRoKom},
+  {n:'디뉴키업',sub:'',a:APR_S.디뉴키업,m:MAY_S.디뉴키업,j:jDinew},
+  {n:'헴철',sub:'',a:APR_S.헴철,m:MAY_S.헴철,j:jHemchul},
+  {n:'천혜당 시리즈',sub:'아워팜+혜택전',a:APR_S.천혜당,m:MAY_S.천혜당,j:jCheon},
+  {n:'방광건강 안심요',sub:'',a:APR_S.안심요,m:MAY_S.안심요,j:jAnsim},
+  {n:'바로스콘 더블액션',sub:'',a:APR_S.바로스콘,m:MAY_S.바로스콘,j:jBaroscon},
+].map((r,i)=>{
+  const cls=i%2===0?'ev':'od',f=fcst(r.j||0);
+  return `<tr class="${cls}"><td class="nm">${r.n}</td><td class="sub">${r.sub||''}</td>
+<td class="R">${fm(r.a)}</td><td class="R">${fm(r.m)}</td><td class="R">${fm(r.j)}</td>
+<td class="C">${ph(r.j,r.m)}</td><td class="C">${ph(r.j,r.a)}</td>
+<td class="R">${fm(f)}</td>${kpiCell(`ow_${i}`,r.j||0)}</tr>`;
+}).join('')}
+</tbody></table></div>
+<p class="note">※ OTC: 바로팜PB·경동·유유OTC·한독 | 아워팜+혜택전: 유유건식·천혜당(생맥수/ORS/포도당세트/캔디3종)</p>`;
+}
+
+// ── 수기 입력 업데이트 ────────────────────────────────────────
+function updateBFTotal(){
+  const a=parseFloat(document.getElementById('bf-total-apr')?.value||'');
+  const m=parseFloat(document.getElementById('bf-total-may')?.value||'');
+  const j=parseFloat(document.getElementById('bf-total-jun')?.value||'');
+  if(!isNaN(a))BAROFARM_TOTAL_APR=a;
+  if(!isNaN(m))BAROFARM_TOTAL_MAY=m;
+  if(!isNaN(j))BAROFARM_TOTAL_JUN=j;
+  render();
+}
+// ── 바로팜몰 수기 입력 ──────────────────────────────────────
+function updateBFBaro(){
+  const j=parseFloat(document.getElementById('bf-baro-jun')?.value||'');
+  const a=parseFloat(document.getElementById('bf-baro-apr')?.value||'');
+  const m=parseFloat(document.getElementById('bf-baro-may')?.value||'');
+  if(!isNaN(j))BAROFARM_BARO_JUN=j;
+  if(!isNaN(a))BAROFARM_BARO_APR=a;
+  if(!isNaN(m))BAROFARM_BARO_MAY=m;
+  render();
+}
+// ── 예치금 수기 입력 ────────────────────────────────────────
+function updateDeposit(){
+  const cj=parseFloat(document.getElementById('bf-dep-charge')?.value||'');
+  const uj=parseFloat(document.getElementById('bf-dep-use')?.value||'');
+  const ca=parseFloat(document.getElementById('bf-dep-charge-apr')?.value||'');
+  const ua=parseFloat(document.getElementById('bf-dep-use-apr')?.value||'');
+  const cm=parseFloat(document.getElementById('bf-dep-charge-may')?.value||'');
+  const um=parseFloat(document.getElementById('bf-dep-use-may')?.value||'');
+  if(!isNaN(cj))DEPOSIT_CHARGE_JUN=cj;
+  if(!isNaN(uj))DEPOSIT_USE_JUN=uj;
+  if(!isNaN(ca))DEPOSIT_CHARGE_APR=ca;
+  if(!isNaN(ua))DEPOSIT_USE_APR=ua;
+  if(!isNaN(cm))DEPOSIT_CHARGE_MAY=cm;
+  if(!isNaN(um))DEPOSIT_USE_MAY=um;
+  render();
+}
+
+// ── 이미지 처리 (파일선택 / Ctrl+V / 드래그드롭 공통) ─────────────
+function handleImg(e,type){ if(e.target.files[0]) processImg(e.target.files[0],type); }
+
+// ── Ctrl+V paste 처리 ─────────────────────────────────────────────
+// 각 paste-zone은 tabindex=0으로 포커스 가능하게 만들고
+// 포커스된 zone에 paste 이벤트가 직접 전달되도록 함
+// + document 레벨에서도 백업으로 캐치
+
+let _activeZone = 'total'; // 현재 활성 zone
+
+// zone 활성화 함수 (클릭 또는 포커스 시 호출)
+function activateZone(type){
+  _activeZone = type;
+  ['total','baro','deposit'].forEach(t=>{
+    const el = document.getElementById('paste-zone-'+t);
+    if(!el) return;
+    if(t === type){
+      el.style.borderColor = t==='total'?'#E67E22':t==='baro'?'#2980B9':'#8E44AD';
+      el.style.background = t==='total'?'#FFF0E0':t==='baro'?'#EBF5FB':'#F5EEF8';
+      el.style.boxShadow = '0 0 0 2px '+(t==='total'?'rgba(230,126,34,0.3)':t==='baro'?'rgba(41,128,185,0.3)':'rgba(142,68,173,0.3)');
+    } else {
+      el.style.borderColor = t==='total'?'#F0A06A':t==='baro'?'#7BAFD0':'#9B8ED0';
+      el.style.background = '#fff';
+      el.style.boxShadow = 'none';
+    }
+  });
+}
+
+// document 레벨 paste (Ctrl+V 어디서든 캐치)
+document.addEventListener('paste', function(e){
+  const items = e.clipboardData?.items || [];
+  for(let i=0; i<items.length; i++){
+    if(items[i].type.startsWith('image/')){
+      const file = items[i].getAsFile();
+      if(!file) continue;
+      processImg(file, _activeZone);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+  }
+}, true); // capture phase에서 처리 (버블링 이전)
+
+const OCR_PROMPTS={
+  total:`이 이미지는 바로팜 "월별 주문금액" 통계 차트 캡쳐입니다.
+차트에서 각 막대에 해당하는 연월과 금액을 읽고, 가장 최근(오른쪽 끝) 데이터를 포함해 JSON으로만 응답하세요:
+{"금액":숫자,"단위":"B또는M또는원","환산_백만원":숫자,"월":"YYYY-MM","메모":"","x축_마지막":"x축에 표시된 마지막 연월"}
+단위: B(billion,십억)이면 ×1000해서 백만원으로, M이면 그대로, 원이면 ÷1000000. 소수점 없이 정수로.`,
+
+  baro:`이 이미지는 바로팜 "바로몰 주문금액" 통계 차트 캡쳐입니다.
+가장 최근(오른쪽 끝) 막대의 바로몰 주문금액을 읽어서 JSON으로만 응답하세요:
+{"금액":숫자,"단위":"B또는M또는원","환산_백만원":숫자,"월":"YYYY-MM","메모":""}
+단위: B이면 ×1000, M이면 그대로, 원이면 ÷1000000.`,
+
+  deposit:`이 이미지는 바로팜 "예치금 금액" 통계 차트 캡쳐입니다. 파란색=충전, 빨간색=사용.
+가장 최근(오른쪽 끝) 데이터의 충전/사용 금액을 읽어서 JSON으로만 응답하세요:
+{"충전":숫자,"사용":숫자,"단위":"B또는M또는원","충전_백만원":숫자,"사용_백만원":숫자,"월":"YYYY-MM","메모":""}`
+};
+
+async function processImg(file,type){
+  const zoneEl=document.getElementById(`paste-zone-${type}`);
+  const prevEl=document.getElementById(`prev-${type}`);
+  const statusEl=document.getElementById('ocr-status');
+
+  // 미리보기
+  const url=URL.createObjectURL(file);
+  if(prevEl) prevEl.innerHTML=`<img src="${url}" style="max-width:100%;max-height:80px;border-radius:4px;border:0.5px solid #ddd">`;
+  if(zoneEl){
+    zoneEl.innerHTML='<span style="font-size:16px">🔍</span><span>분석 중...</span>';
+    zoneEl.style.color='#999';
+  }
+  if(statusEl) statusEl.textContent=`⏳ ${type==='total'?'바로팜Total':type==='baro'?'바로팜몰':'예치금'} 이미지 분석 중...`;
+
+  const b64=await new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=ev=>res(ev.target.result.split(',')[1]);
+    fr.onerror=rej;
+    fr.readAsDataURL(file);
+  });
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:500,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:file.type||'image/png',data:b64}},
+          {type:'text',text:OCR_PROMPTS[type]}
+        ]}]
+      })
+    });
+    const data=await resp.json();
+    const raw=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const p=JSON.parse(clean);
+
+    let msg='';
+    if(type==='total'&&p.환산_백만원!=null){
+      // 월 정보로 Apr/May/Jun 구분 저장
+      const mon=p.월||'';
+      if(mon.includes('-04')||mon.includes('04월')){BAROFARM_TOTAL_APR=p.환산_백만원;const el=document.getElementById('bf-total-apr');if(el)el.value=p.환산_백만원;}
+      else if(mon.includes('-05')||mon.includes('05월')){BAROFARM_TOTAL_MAY=p.환산_백만원;const el=document.getElementById('bf-total-may');if(el)el.value=p.환산_백만원;}
+      else {BAROFARM_TOTAL_JUN=p.환산_백만원;const el=document.getElementById('bf-total-jun');if(el)el.value=p.환산_백만원;}
+      msg=`✅ 바로팜Total: ${(p.환산_백만원/100).toFixed(2)}억 (${p.월||'최근월'})`;
+    } else if(type==='baro'&&p.환산_백만원!=null){
+      const mon=p.월||'';
+      if(mon.includes('-04')||mon.includes('04월')){BAROFARM_BARO_APR=p.환산_백만원;const el=document.getElementById('bf-baro-apr');if(el)el.value=p.환산_백만원;}
+      else if(mon.includes('-05')||mon.includes('05월')){BAROFARM_BARO_MAY=p.환산_백만원;const el=document.getElementById('bf-baro-may');if(el)el.value=p.환산_백만원;}
+      else {BAROFARM_BARO_JUN=p.환산_백만원;const el=document.getElementById('bf-baro-jun');if(el)el.value=p.환산_백만원;}
+      msg=`✅ 바로팜몰: ${(p.환산_백만원/100).toFixed(2)}억 (${p.월||'최근월'})`;
+    } else if(type==='deposit'){
+      if(p.충전_백만원!=null){
+        DEPOSIT_CHARGE_JUN=p.충전_백만원;
+        const el=document.getElementById('bf-dep-charge');
+        if(el)el.value=p.충전_백만원;
+      }
+      if(p.사용_백만원!=null){
+        DEPOSIT_USE_JUN=p.사용_백만원;
+        const el=document.getElementById('bf-dep-use');
+        if(el)el.value=p.사용_백만원;
+      }
+      msg=`✅ 예치금 충전: ${(p.충전_백만원/100||0).toFixed(2)}억 / 사용: ${(p.사용_백만원/100||0).toFixed(2)}억`;
+    }
+    if(statusEl) statusEl.innerHTML=`<span style="color:#1F6B3E">${msg}</span> ${p.메모?'— '+p.메모:''}`;
+    if(zoneEl){
+      zoneEl.innerHTML='<span style="font-size:16px">✅</span><span>인식 완료</span><span style="font-size:10px;color:#aaa">다시 Ctrl+V 가능</span>';
+      zoneEl.style.color='#1F6B3E';
+    }
+    render();
+  } catch(err){
+    if(statusEl) statusEl.innerHTML='<span style="color:#C0392B">❌ 인식 실패 — 수기 입력으로 직접 입력해 주세요</span>';
+    if(zoneEl){
+      zoneEl.innerHTML='<span style="font-size:16px">❌</span><span>실패 — 다시 시도</span>';
+      zoneEl.style.color='#C0392B';
+      setTimeout(()=>{
+        if(zoneEl){
+          zoneEl.innerHTML='<span style="font-size:16px">📋</span><span>Ctrl+V 붙여넣기</span><span style="font-size:10px;color:#bbb">또는 클릭하여 파일 선택</span>';
+          zoneEl.style.color='#888';
+        }
+      },3000);
+    }
+    console.error(err);
+  }
+}
+
+// ── MTD 파일 처리 ─────────────────────────────────────────────
+function processFile(file){
+  const da=document.getElementById('drop-area');
+  da.textContent='파일 처리 중...';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const sn=wb.SheetNames.find(n=>n.includes('MTD')||n.includes('상품별'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sn];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+      JUN_ROWS=rows;JUN_V={};JUN_TOT=0;DAILY_JUN={};
+      let maxDate=null;
+      rows.forEach(r=>{
+        const v=r['도매상']||'';
+        const amt=Number((r['실주문금액']||'').toString().replace(/,/g,''))||0;
+        JUN_V[v]=(JUN_V[v]||0)+amt/1e6;JUN_TOT+=amt/1e6;
+        const dStr=r['주문일시']||r['날짜']||'';
+        if(dStr){
+          const dt=new Date(dStr);
+          if(!isNaN(dt)){
+            if(!maxDate||dt>maxDate)maxDate=dt;
+            const day=dt.getDate();
+            DAILY_JUN[day]=(DAILY_JUN[day]||0)+amt/1e6;
+          }
+        }
+      });
+      let year=2026,month=6,lastDay=8;
+      if(maxDate){year=maxDate.getFullYear();month=maxDate.getMonth()+1;lastDay=maxDate.getDate();}
+      const wd=calcWD(year,month,lastDay);
+      WD_E=wd.elapsed;WD_T=wd.tot;
+      WD_REF=`${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      const now=new Date();
+      document.getElementById('update-info').textContent=`✓ 갱신완료 · ${rows.length.toLocaleString()}행 · ${now.toLocaleTimeString()}`;
+      da.innerHTML=`✅ <strong>${file.name}</strong> (${rows.length.toLocaleString()}행) | 최종주문일: <strong>${WD_REF}</strong> | 경과WD: <strong>${WD_E}일</strong>/${WD_T}일 — 새 파일 드래그 또는 클릭`;
+    }catch(err){
+      alert('파일 읽기 실패: '+err.message);
+      da.innerHTML='엑셀 파일을 <strong>끌어다 놓거나 클릭</strong>해서 당월 MTD 데이터 업로드';
+    }
+    render();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── 탭·이벤트 ────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+document.getElementById('file-inp').addEventListener('change',e=>{if(e.target.files[0])processFile(e.target.files[0]);});
+const da=document.getElementById('drop-area');
+da.addEventListener('click',()=>document.getElementById('file-inp').click());
+da.addEventListener('dragover',e=>{e.preventDefault();da.classList.add('over');});
+da.addEventListener('dragleave',()=>da.classList.remove('over'));
+da.addEventListener('drop',e=>{e.preventDefault();da.classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+
+render();
+</script>
+</body>
+</html>
