@@ -1,1 +1,0 @@
-# Baropharm-Daily-Sales-Tracker
