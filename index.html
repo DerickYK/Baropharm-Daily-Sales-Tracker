@@ -99,11 +99,11 @@ td.ki{background:#FFF3E0!important}td.inp{background:#FFFDE7!important}
 <!-- 헤더 -->
 <div class="hdr">
   <div>
-    <h1>📊 BMS Daily Sales Tracker &nbsp;<span class="share-badge" id="hdr-badge">📅 2026-06-23 기준 &nbsp;|&nbsp; Jun W.D 16/21일 (76.19%)</span></h1>
-    <p id="hdr-sub">단위: 백만원(M) · 소수점 2자리 | KPI 수기 입력 가능 | 기준일: 2026-06-23 (경과 W.D 16일/총 21일 · 76.19%)</p>
+    <h1>📊 BMS Daily Sales Tracker &nbsp;<span class="share-badge" id="hdr-badge">📅 2026-06-24 기준 &nbsp;|&nbsp; Jun W.D 17/21일 (80.95%)</span></h1>
+    <p id="hdr-sub">단위: 백만원(M) · 소수점 2자리 | KPI 수기 입력 가능 | 기준일: 2026-06-24 (경과 W.D 17일/총 21일 · 80.95%)</p>
   </div>
   <div class="hdr-right">
-    <span class="update-info" id="update-info">기준일: 2026-06-23</span>
+    <span class="update-info" id="update-info">기준일: 2026-06-24</span>
     <button class="btn-file" onclick="document.getElementById('file-inp').click()">📂 Jun MTD 업데이트</button>
     <input id="file-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none">
   </div>
@@ -119,8 +119,8 @@ td.ki{background:#FFF3E0!important}td.inp{background:#FFFDE7!important}
   <span class="badge">워킹데이</span>
   <div class="wd-item"><div class="wlbl">Apr.</div><div class="wval">22일</div></div>
   <div class="wd-item"><div class="wlbl">May</div><div class="wval">18일</div></div>
-  <div class="wd-item"><div class="wlbl">Jun. 기준일</div><div class="wval" id="wd-refdate">2026-06-23</div></div>
-  <div class="wd-item"><div class="wlbl">경과 워킹데이</div><div class="wval" id="wd-el">16일</div></div>
+  <div class="wd-item"><div class="wlbl">Jun. 기준일</div><div class="wval" id="wd-refdate">2026-06-24</div></div>
+  <div class="wd-item"><div class="wlbl">경과 워킹데이</div><div class="wval" id="wd-el">17일</div></div>
   <div class="wd-item"><div class="wlbl">월 진행율</div><div class="wval" id="wd-prog" style="color:#2E75B6">42.86%</div></div>
   <div class="wd-item"><div class="wlbl">Jun. 총 워킹데이</div><div class="wval" id="wd-tot">21일</div></div>
   <div class="wd-item"><div class="wlbl">공휴일 제외</div><div class="wval" style="font-size:11px;color:#666">5/1·5·25 / 6/3 선거일</div></div>
@@ -146,7 +146,7 @@ td.ki{background:#FFF3E0!important}td.inp{background:#FFFDE7!important}
 <div id="p-prod" class="panel"></div>
 <div id="p-ow"  class="panel"></div>
 
-<p class="note">※ 단위: 백만원(M) · 소수점 2자리 &nbsp;|&nbsp; 마감예상 = MTD ÷ 경과WD × 총WD &nbsp;|&nbsp; Apr 22일 / May 18일 / Jun 21일 (W.D) &nbsp;|&nbsp; 기준: 2026-06-23 &nbsp;|&nbsp; 🟠 KPI는 각자 입력 (공유자 간 개별 저장)</p>
+<p class="note">※ 단위: 백만원(M) · 소수점 2자리 &nbsp;|&nbsp; 마감예상 = MTD ÷ 경과WD × 총WD &nbsp;|&nbsp; Apr 22일 / May 18일 / Jun 21일 (W.D) &nbsp;|&nbsp; 기준: 2026-06-24 &nbsp;|&nbsp; 🟠 KPI는 각자 입력 (공유자 간 개별 저장)</p>
 </div>
 </div>
 
@@ -216,64 +216,64 @@ const MAY_P={니조랄:187.96,니코레트:382.23,케토톱:353.59,크림:42.42,
 
 // ── 상태 ─────────────────────────────────────────────────────
 let JUN_V={
-  'CHD제약':12.8,
-  'CMG제약':25.57,
-  'SK케미칼':18.75,
-  '경동제약':124.05,
-  '그린제약':68.97,
-  '대원제약':87.81,
-  '동성제약':28.54,
-  '레비온':18.62,
-  '레킷코리아':104.17,
-  '마더스':21.35,
-  '바로팜':58.29,
-  '바로팜 기획전':1.38,
-  '삼일제약':27.85,
-  '아워팜':1496.58,
-  '아워팜(OTC)':539.64,
-  '아워팜(혜택전)':59.41,
-  '영진약품':27.9,
-  '영진약품(직거래)':40.22,
-  '옵투스':79.21,
-  '유유제약':67.06,
-  '익수제약':43.1,
-  '익수제약(직거래)':1633.43,
-  '일동후디스':11.63,
-  '지엘파마':4.32,
-  '켄뷰(직거래A)':806.11,
-  '켄뷰(직거래B)':233.01,
-  '켄뷰(직거래C)':605.99,
-  '켄뷰(코리아)':578.52,
-  '코오롱제약':26.8,
-  '코오롱제약(직거래)':502.35,
-  '코오롱제약(직거래SP)':61.1,
-  '파마리서치':52.69,
-  '한독':208.68,
-  '한독KAM (직거래)':1451.75,
-  '한풍제약':36.96,
-  '현대약품':212.46,
-  '휴온스':139.82
+  'CHD제약':13.14,
+  'CMG제약':26.38,
+  'SK케미칼':19.82,
+  '경동제약':128.99,
+  '그린제약':72.7,
+  '대원제약':92.08,
+  '동성제약':30.23,
+  '레비온':18.77,
+  '레킷코리아':105.66,
+  '마더스':23.15,
+  '바로팜':59.59,
+  '바로팜 기획전':1.45,
+  '삼일제약':33.1,
+  '아워팜':1577.49,
+  '아워팜(OTC)':568.75,
+  '아워팜(혜택전)':61.81,
+  '영진약품':29.2,
+  '영진약품(직거래)':42.15,
+  '옵투스':82.61,
+  '유유제약':69.53,
+  '익수제약':44.46,
+  '익수제약(직거래)':1807.69,
+  '일동후디스':11.9,
+  '지엘파마':4.38,
+  '켄뷰(직거래A)':838.04,
+  '켄뷰(직거래B)':255.38,
+  '켄뷰(직거래C)':628.56,
+  '켄뷰(코리아)':600.5,
+  '코오롱제약':28.29,
+  '코오롱제약(직거래)':553.37,
+  '코오롱제약(직거래SP)':72.96,
+  '파마리서치':54.44,
+  '한독':214.49,
+  '한독KAM (직거래)':1590.7,
+  '한풍제약':38.98,
+  '현대약품':219.53,
+  '휴온스':143.95
 };
-let JUN_TOT=9516.86,JUN_ROWS=[];
-let WD_E=16,WD_T=21,WD_REF='2026-06-23';
+let JUN_TOT=10164.25,JUN_ROWS=[];
+let WD_E=17,WD_T=21,WD_REF='2026-06-24';
 const KPI={};
 // ── Apr/May 고정값 ────────────────────────────────────────────
-let BAROFARM_TOTAL_APR=197904.43,BAROFARM_TOTAL_MAY=180692.02,BAROFARM_TOTAL_JUN=145674.21;
-let BAROFARM_BARO_APR=33371.84,BAROFARM_BARO_MAY=28478.42,BAROFARM_BARO_JUN=22484.84;
-let DEPOSIT_CHARGE_APR=13524.16,DEPOSIT_CHARGE_MAY=11430.20,DEPOSIT_CHARGE_JUN=10267.88;
-let DEPOSIT_USE_APR=13448.00,DEPOSIT_USE_MAY=11290.37,DEPOSIT_USE_JUN=9358.47;
-// ── Jun MTD 품목별 기본값 (6/23 기준) ─────────────────────────
-let jEkdong=147.66,jHandok=176.26,jPb=13.48,jYuyooOtc=215.72;
-let jYuyoo=1555.99,jBaro=38.05,jElder=91.68,jBiotic=16.31;
-let jBaRoKom=30.28,jDinew=27.20,jHemchul=47.54,jCheon=35.07;
-let jAnsim=20.24,jBaroscon=15.05;
-let jNizoral=204.29,jNico=311.00,jKetotop=261.24;
-let jCream=28.62,jMask=5.48,jSun=16.32,jJuvelook=45.36;
-// ── Jun MTD 일별 기본값 (6/23 기준, 억원) ─────────────────────
+let BAROFARM_TOTAL_APR=197904.43,BAROFARM_TOTAL_MAY=180692.02,BAROFARM_TOTAL_JUN=152927.71;
+let BAROFARM_BARO_APR=33371.84,BAROFARM_BARO_MAY=28478.42,BAROFARM_BARO_JUN=23642.17;
+let DEPOSIT_CHARGE_APR=13524.16,DEPOSIT_CHARGE_MAY=11430.20,DEPOSIT_CHARGE_JUN=10473.19;
+let DEPOSIT_USE_APR=13448.00,DEPOSIT_USE_MAY=11290.37,DEPOSIT_USE_JUN=9763.56;
+// ── Jun MTD 품목별 기본값 (6/24 기준) ─────────────────────────
+let jEkdong=152.90,jHandok=187.52,jPb=13.95,jYuyooOtc=228.33;
+let jYuyoo=1639.30,jBaro=39.85,jElder=95.39,jBiotic=16.69;
+let jBaRoKom=32.35,jDinew=27.68,jHemchul=48.66,jCheon=36.92;
+let jAnsim=20.24,jBaroscon=16.05;
+let jNizoral=214.89,jNico=327.26,jKetotop=275.45;
+let jCream=29.37,jMask=5.48,jSun=16.32,jJuvelook=48.33;
+// ── Jun MTD 일별 기본값 (6/24 기준, 억원) ─────────────────────
 let DAILY_JUN={1:5.61,2:6.29,3:1.61,4:6.21,5:4.27,6:0.80,7:0.84,
   8:6.52,9:5.81,10:6.10,11:6.47,12:4.93,13:1.07,14:0.84,
   15:6.49,16:5.24,17:3.87,18:4.12,19:5.28,20:0.97,21:0.71,
-  22:6.02,23:5.09};
+  22:6.02,23:5.09,24:6.48};
 const chartInstances={};
 
 // ── 워킹데이 ─────────────────────────────────────────────────
@@ -398,13 +398,13 @@ function render(){
   const bmsTA=bmsBrA+kdA,bmsTM=bmsBrM+kdM,bmsTJ=bmsBrJ+kdJ;
 
   // Jun 아워팜 품목 (기본값 - 파일 업로드 시 덮어씀)
-  // Jun 기본값 (6/23 기준) - 파일 업로드 시 덮어씀
-  jEkdong=147.66;jHandok=176.26;jPb=13.48;jYuyooOtc=215.72;
-  jYuyoo=1555.99;jBaro=38.05;jElder=91.68;jBiotic=16.31;
-  jBaRoKom=30.28;jDinew=27.20;jHemchul=47.54;jCheon=35.07;
-  jAnsim=20.24;jBaroscon=15.05;
-  jNizoral=204.29;jNico=311.00;jKetotop=261.24;
-  jCream=28.62;jMask=5.48;jSun=16.32;jJuvelook=45.36;
+  // Jun 기본값 (6/24 기준) - 파일 업로드 시 덮어씀
+  jEkdong=152.90;jHandok=187.52;jPb=13.95;jYuyooOtc=228.33;
+  jYuyoo=1639.30;jBaro=39.85;jElder=95.39;jBiotic=16.69;
+  jBaRoKom=32.35;jDinew=27.68;jHemchul=48.66;jCheon=36.92;
+  jAnsim=20.24;jBaroscon=16.05;
+  jNizoral=214.89;jNico=327.26;jKetotop=275.45;
+  jCream=29.37;jMask=5.48;jSun=16.32;jJuvelook=48.33;
   if(JUN_ROWS.length){
     const jOtcTot=gskw(JUN_ROWS,null,OTC_V);
     jEkdong=gskw(JUN_ROWS,'경동',OTC_V);jHandok=gskw(JUN_ROWS,'한독',OTC_V);
