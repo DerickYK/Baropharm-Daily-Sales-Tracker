@@ -460,6 +460,16 @@ function ph(a,b){
   const v=a/b*100,cls=v>=100?'g':v>=80?'':'w';
   return `<span class="${cls}">${v.toFixed(1)}%</span>`;
 }
+// M-1/M-2 진행율 셀: WD 진행율(WD_E/WD_T)보다 높으면 파란 배경으로 강조
+function wdProgPct(){return WD_T>0?WD_E/WD_T*100:0;}
+function phBG(a,b){
+  if(!b)return '<td class="C"><span class="na">-</span></td>';
+  const v=a/b*100, cls=v>=100?'g':v>=80?'':'w';
+  const ahead=v>wdProgPct();
+  const bg=ahead?' style="background:#CFE2F3!important;font-weight:600"':'';
+  const tip=' title="WD 진행율 '+wdProgPct().toFixed(2)+'% '+(ahead?'초과(페이스 우위)':'이하')+'"';
+  return '<td class="C"'+bg+tip+'><span class="'+cls+'">'+v.toFixed(1)+'%</span></td>';
+}
 function fcst(j){return WD_E>0?j/WD_E*WD_T:0;}
 function svM(bv,ns){return ns.reduce((s,n)=>s+(bv[n]||0),0);}
 function gskw(rows,kw,vendors){
@@ -496,7 +506,7 @@ function tHead(lbl2,sColor){
 <tr style="height:22px">
   <th class="L hg"${lbl2?' colspan="2"':''}>&nbsp;</th>
   <th class="R hg">M</th><th class="R hg">M</th><th class="R hg">M</th>
-  <th class="R hg">M</th><th class="C hg">vs M-1</th><th class="C hg">vs M-2</th>
+  <th class="R hg">M</th><th class="C hg" title="Jul MTD ÷ Jun 마감 × 100 (전월 대비 진행율)">vs M-1(Jun)</th><th class="C hg" title="Jul MTD ÷ May 마감 × 100 (전전월 대비 진행율)">vs M-2(May)</th>
   <th class="C hg" title="동일 워킹데이 기준">W.D</th>
   <th class="C hg" title="동일 달력일 기준">Cal</th>
   <th class="R hg">Avg×${WD_T}일</th>
@@ -543,8 +553,8 @@ function dRow(r,i,prefix,h2){
     '<td class="R">'+fm(r.m)+'</td>'+
     '<td class="R">'+fm(junFinal)+'</td>'+
     '<td class="R">'+fm(r.j)+'</td>'+
-    '<td class="C">'+ph(r.j,r.m)+'</td>'+
-    '<td class="C">'+ph(r.j,r.a)+'</td>'+
+    phBG(r.j,junFinal)+
+    phBG(r.j,r.m)+
     '<td class="C">'+vsJunWD_r(r.j,junFinal)+'</td>'+
     '<td class="C">'+vsJunCal_r(r.j,junFinal)+'</td>'+
     '<td class="R">'+fm(f)+'</td>'+
@@ -561,8 +571,8 @@ function totR(tot,prefix,h2,cls2){
     '<td class="R">'+fm(tot.m)+'</td>'+
     '<td class="R">'+fm(junFinal)+'</td>'+
     '<td class="R">'+fm(tot.j)+'</td>'+
-    '<td class="C">'+ph(tot.j,tot.m)+'</td>'+
-    '<td class="C">'+ph(tot.j,tot.a)+'</td>'+
+    phBG(tot.j,junFinal)+
+    phBG(tot.j,tot.m)+
     '<td class="C">'+vsJunWD_r(tot.j,junFinal)+'</td>'+
     '<td class="C">'+vsJunCal_r(tot.j,junFinal)+'</td>'+
     '<td class="R">'+fm(f)+'</td>'+
@@ -808,8 +818,11 @@ function render(){
     if(r.inp){
       const jv=r.iJul,mval=r.iM,juv=r.iJ;
       const aval=r.iA;
-      const vm1=jv!=null&&mval?'<span class="'+(jv/mval*100>=100?'g':'w')+'">'+(jv/mval*100).toFixed(2)+'%</span>':'<span class="na">-</span>';
-      const vm2=jv!=null&&aval?'<span class="'+(jv/aval*100>=100?'g':'w')+'">'+(jv/aval*100).toFixed(2)+'%</span>':'<span class="na">-</span>';
+      const vm1=jv!=null&&juv?'<span class="'+(jv/juv*100>=100?'g':'w')+'">'+(jv/juv*100).toFixed(2)+'%</span>':'<span class="na">-</span>';
+      const vm2=jv!=null&&mval?'<span class="'+(jv/mval*100>=100?'g':'w')+'">'+(jv/mval*100).toFixed(2)+'%</span>':'<span class="na">-</span>';
+      const _wp=wdProgPct();
+      const b1=(jv!=null&&juv&&(jv/juv*100)>_wp)?' style="background:#CFE2F3!important;font-weight:600"':'';
+      const b2=(jv!=null&&mval&&(jv/mval*100)>_wp)?' style="background:#CFE2F3!important;font-weight:600"':'';
       const wdC=jv!=null&&juv&&WD_E?juv/21*WD_E:null;
       const calC=jv!=null&&juv&&CAL_E?juv/30*CAL_E:null;
       const vsWD=wdC?'<span class="'+(jv/wdC*100>=100?'g':'w')+'">'+(jv/wdC*100).toFixed(2)+'%</span>':'<span class="na">-</span>';
@@ -817,7 +830,7 @@ function render(){
       const fc2=jv!=null&&WD_E?fm(jv/WD_E*WD_T):'<span class="na">-</span>';
       return '<tr class="'+(i%2===0?'ev':'od')+'"><td class="nm">'+r.lbl+'</td><td class="sub" style="font-style:italic">이미지·수기</td>'+
         '<td class="R">'+fa2(r.iA)+'</td><td class="R">'+fa2(r.iM)+'</td><td class="R">'+fa2(r.iJ)+'</td>'+
-        '<td class="R">'+fa2(jv)+'</td><td class="C">'+vm1+'</td><td class="C">'+vm2+'</td>'+
+        '<td class="R">'+fa2(jv)+'</td><td class="C"'+b1+'>'+vm1+'</td><td class="C"'+b2+'>'+vm2+'</td>'+
         '<td class="C">'+vsWD+'</td><td class="C">'+vsCal+'</td>'+
         '<td class="R">'+fc2+'</td><td class="ki" style="font-size:9px;color:#aaa;text-align:right">-</td></tr>';
     }
@@ -829,7 +842,7 @@ function render(){
     return '<tr class="'+(r.rc?r.rc:(i%2===0?'ev':'od'))+'"><td class="nm" style="font-weight:'+(r.lbl==='바로팜 Total'||r.lbl==='BMS'?600:400)+'">'+r.lbl+'</td>'+
       '<td class="sub" style="font-style:italic">'+(r.sub||'')+'</td>'+
       '<td class="R">'+fm(r.a)+'</td><td class="R">'+fm(r.m)+'</td><td class="R">'+fm(junFinal)+'</td>'+
-      '<td class="R">'+fm(r.j)+'</td><td class="C">'+ph(r.j,r.m)+'</td><td class="C">'+ph(r.j,r.a)+'</td>'+
+      '<td class="R">'+fm(r.j)+'</td>'+phBG(r.j,junFinal)+phBG(r.j,r.m)+
       '<td class="C">'+vsWD2+'</td><td class="C">'+vsCal2+'</td>'+
       '<td class="R">'+fm(f)+'</td>'+kpiCell('bm_'+i,r.j||0)+'</tr>';
   }).join('');
@@ -884,13 +897,13 @@ function render(){
     '<th class="C h1">마감예상</th><th class="C h3">KPI</th></tr>'+
     '<tr style="height:22px"><th class="L hg" colspan="2">&nbsp;</th>'+
     '<th class="R hg">M</th><th class="R hg">M</th><th class="R hg">M</th>'+
-    '<th class="R hg">M</th><th class="C hg">vs M-1</th><th class="C hg">vs M-2</th>'+
+    '<th class="R hg">M</th><th class="C hg" title="Jul MTD ÷ Jun × 100 (전월 대비 진행율)">vs M-1(Jun)</th><th class="C hg" title="Jul MTD ÷ May × 100 (전전월 대비 진행율)">vs M-2(May)</th>'+
     '<th class="C hg">W.D</th><th class="C hg">Cal</th>'+
     '<th class="R hg">Avg×'+WD_T+'</th><th class="R hg" style="background:#FFF3E0;color:#7F4000">목표/달성</th></tr></thead>'+
     '<tbody>'+bmsBody+
     '<tr class="tot"><td class="nm" colspan="2">BMS 합계</td>'+
     '<td class="R">'+fm(bmsTA)+'</td><td class="R">'+fm(bmsTM)+'</td><td class="R">'+fm(bmsTJ)+'</td>'+
-    '<td class="R">'+fm(bmsTJul)+'</td><td class="C">'+ph(bmsTJul,bmsTM)+'</td><td class="C">'+ph(bmsTJul,bmsTA)+'</td>'+
+    '<td class="R">'+fm(bmsTJul)+'</td>'+phBG(bmsTJul,bmsTJ)+phBG(bmsTJul,bmsTM)+
     '<td class="C">'+(bmsWD?'<span class="'+(bmsTJul/bmsWD*100>=100?'g':'w')+'">'+(bmsTJul/bmsWD*100).toFixed(2)+'%</span>':'<span class="na">-</span>')+'</td>'+
     '<td class="C">'+(bmsCal?'<span class="'+(bmsTJul/bmsCal*100>=100?'g':'w')+'">'+(bmsTJul/bmsCal*100).toFixed(2)+'%</span>':'<span class="na">-</span>')+'</td>'+
     '<td class="R">'+fm(bmsFc)+'</td>'+kpiCell('bm_tot',bmsTJul)+'</tr>'+
