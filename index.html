@@ -598,8 +598,8 @@ function totR(tot,prefix,h2,cls2){
 }
 function mkTable(rows,prefix,h2,tot,grand,sColor,lbl2){
   const cg=h2
-    ?'<colgroup><colgroup><col style="width:13%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:6%"><col style="width:8%"><col style="width:6%"><col style="width:12%"></colgroup>'
-    :'<colgroup><colgroup><col style="width:16%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:6%"><col style="width:7%"><col style="width:8%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:8%"><col style="width:12%"></colgroup>';
+    ?'<colgroup><col style="width:12%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:10%"></colgroup>'
+    :'<colgroup><col style="width:16%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:12%"></colgroup>';
   return `<div style="overflow-x:auto"><table>${cg}${tHead(lbl2,sColor)}<tbody>
 ${rows.map((r,i)=>dRow(r,i,prefix,h2)).join('')}
 ${tot?totR(tot,prefix,h2,'tot'):''}${grand?totR(grand,prefix,h2,'grand'):''}
@@ -865,7 +865,7 @@ function render(){
     {lbl:'BMS',sub:'브랜드관',a:bT.a,m:bT.m,jun:bT.jun,jul:bT.jul,aug:bT.aug,j:bT.j,d:bT.d},
     {lbl:'',sub:'직거래',a:dT.a,m:dT.m,jun:dT.jun,jul:dT.jul,aug:dT.aug,j:dT.j,d:dT.d},
   ];
-  const bmsColG='<colgroup><colgroup><col style="width:10%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:11%"></colgroup>';
+  const bmsColG='<colgroup><col style="width:10%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:12%"></colgroup>';
   const bmsBody=bmsRows.map((r,i)=>{
     if(r.inp){
       const jv=r.iJul,mval=r.iM,juv=r.iJ,julv=r.iJulF,augv=r.iAugF;
