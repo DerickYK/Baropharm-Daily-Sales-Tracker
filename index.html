@@ -858,8 +858,8 @@ function render(){
   // ── 바로팜 Summary ───────────────────────────────────────────
   const fa2=v=>v!=null?'<span style="color:#1F3864;font-weight:500">'+fm(v)+'</span>':'<span class="na">-</span>';
   const bmsRows=[
-    {lbl:'바로팜 Total',sub:'연동몰 포함',a:BAROFARM_TOTAL_APR,m:BAROFARM_TOTAL_MAY,jun:BAROFARM_TOTAL_JUN,jul:196407.68,aug:193634.42,j:bfTotJ,rc:'total-row',d:(BAROFARM_TOTAL_JUL-BAROFARM_TOTAL_JUL_PREV)},
-    {lbl:'바로팜몰',sub:'자체몰',a:BAROFARM_BARO_APR,m:BAROFARM_BARO_MAY,jun:BAROFARM_BARO_JUN,jul:30852.54,aug:35675.47,j:baroJ_final,rc:'baro',d:(BAROFARM_BARO_JUL-BAROFARM_BARO_JUL_PREV)},
+    {lbl:'바로팜 Total',sub:'연동몰 포함',a:BAROFARM_TOTAL_APR,m:BAROFARM_TOTAL_MAY,jun:BAROFARM_TOTAL_JUN,jul:196407.68,aug:191634.42,j:bfTotJ,rc:'total-row',d:(BAROFARM_TOTAL_JUL-BAROFARM_TOTAL_JUL_PREV)},
+    {lbl:'바로팜몰',sub:'자체몰',a:BAROFARM_BARO_APR,m:BAROFARM_BARO_MAY,jun:BAROFARM_BARO_JUN,jul:30852.54,aug:33675.47,j:baroJ_final,rc:'baro',d:(BAROFARM_BARO_JUL-BAROFARM_BARO_JUL_PREV)},
     {lbl:'예치금 충전',sub:'',iA:DEPOSIT_CHARGE_APR,iM:DEPOSIT_CHARGE_MAY,iJ:DEPOSIT_CHARGE_JUN,iJul:depCJ,iJulF:12539.85,iAugF:17738.11,inp:true,iD:(depCJ-DEPOSIT_CHARGE_JUL_PREV)},
     {lbl:'예치금 사용',sub:'',iA:DEPOSIT_USE_APR,iM:DEPOSIT_USE_MAY,iJ:DEPOSIT_USE_JUN,iJul:depUJ,iJulF:12507.73,iAugF:15441.90,inp:true,iD:(depUJ-DEPOSIT_USE_JUL_PREV)},
     {lbl:'BMS',sub:'브랜드관',a:bT.a,m:bT.m,jun:bT.jun,jul:bT.jul,aug:bT.aug,j:bT.j,d:bT.d},
